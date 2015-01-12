@@ -8,7 +8,7 @@ parser = HTMLParser()
 #print ukrainian 'i' to console as latin 'i'
 cp866.encoding_map[ord('і')] = cp866.encoding_map[ord('i')]
 
-with open('output\\vsetv.txt', 'w') as f:
+with open('../output/vsetv.txt', 'w') as f:
     ua = 'Mozilla/5.0 (Windows NT 6.1; rv:9.0) Gecko/20100101 Firefox/9.0'
     hdrs = {'user-agent': ua}
     for i in range(1, 1016):
