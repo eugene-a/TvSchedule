@@ -3,10 +3,10 @@ import heapq
 from http.client import HTTPException
 from datetime import timedelta
 
-from pytz import timezone
+from tzlocal import get_localzone
 
 from config import Config
-from util import genitive_month, prepare, TIMEZONE
+from util import genitive_month, prepare
 from source import *
 
 
@@ -57,12 +57,12 @@ class ScheduleWriter:
         f_prog.write(schedule_header)
         f_sum.write(schedule_header)
 
-        self.tz = timezone(TIMEZONE)
+        self.tz = get_localzone()
 
         self.f_prog = f_prog
         self.f_sum = f_sum
 
-        self.source = {}
+        self.source = {'9 Канал Израиль':  (channel9, )}
 
         vse_ch = (
             'М1', 'OTV', '5 канал','Футбол+', 'ПлюсПлюс', 
@@ -70,7 +70,7 @@ class ScheduleWriter:
         )
 
         viasat_ch = (
-            'VH1', 'Cartoon Network', 'Disney XD',
+            'VH1', 'Disney XD',
             'BBC World News', 'TV1000 Premium'
         )
         

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
-<!-- eric5 project file for project TvSchedule3 -->
-<!-- Saved: 2014-07-10, 10:12:22 -->
-<!-- Copyright (C) 2014 Eugene Alterman, eugalt@gmail.com -->
+<!-- eric project file for project TvSchedule3 -->
+<!-- Saved: 2015-01-11, 21:08:42 -->
+<!-- Copyright (C) 2015 Eugene Alterman, eugalt@gmail.com -->
 <Project version="5.1">
   <Language>en_US</Language>
   <Hash>9bbd7429321980332872ea18ef80abd1fc42192d</Hash>
@@ -21,12 +21,12 @@
     <Source>source/viasat.py</Source>
     <Source>source/vsetv.py</Source>
     <Source>source/__init__.py</Source>
-    <Source>tzid.py</Source>
     <Source>util.py</Source>
     <Source>source/channels/vsetvch.py</Source>
     <Source>source/akado.py</Source>
     <Source>source/channels/akadoch.py</Source>
     <Source>cp1251m.py</Source>
+    <Source>source/channel9.py</Source>
   </Sources>
   <Forms/>
   <Translations/>

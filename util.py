@@ -2,10 +2,9 @@ import re
 from platform import system
 from locale import setlocale, LC_CTYPE, LC_TIME
 from datetime import date
-from ctypes import windll
 
 PLATFORM = system()
-MONTH = YEAR = YEAR_STR = TIMEZONE = None
+MONTH = YEAR = YEAR_STR = None
 
 
 def init():
@@ -18,12 +17,8 @@ def init():
     YEAR_STR = ' ' + str(YEAR)
 
     if PLATFORM == 'Windows':
-        from time import tzname
-        from tzid import tzid
-        TIMEZONE = tzid[tzname[0]]
         ru_locale = 'Russian_Russia.1251'
     elif PLATFORM == 'Linux':
-        TIMEZONE = open('/etc/timezone').read().rstrip()
         ru_locale = 'ru_RU.CP1251'
     else:
         raise Exception(PLATFORM + ': unsupported platform')
@@ -96,6 +91,7 @@ def extract_text(elem):
 
 def no_idle():
     if PLATFORM == 'Windows':
+        from ctypes import windll
         es_system_required = 0x00000001
         es_continuous = 0x80000000
         windll.kernel32.SetThreadExecutionState(es_system_required | es_continuous)

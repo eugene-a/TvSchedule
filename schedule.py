@@ -30,9 +30,6 @@ class Schedule:
         #a stored summary is used when the show is repeated later in a week
         self.summaries = {}
 
-    def set_timezone(self, tz):
-        self.source_tz = tz
-
     def set_date(self, date):
         self.source_date = date
         self.source_hour = 0
