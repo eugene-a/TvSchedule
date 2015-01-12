@@ -67,7 +67,7 @@ def get_summary(path):
 
 def get_schedule(channel, tz):
     ch_code = channel_code.get(channel)
-    if ch_code is  None:
+    if ch_code is None:
         return []
 
     path = 'schedule_channel_' + ch_code + '_week.html'

@@ -30,7 +30,7 @@ def fetch(path):
 
 def get_schedule(channel, tz):
     ch_code = channel_code.get(channel)
-    if ch_code is  None:
+    if ch_code is None:
         return []
 
     schedule = Schedule(tz, source_tz)
@@ -38,13 +38,13 @@ def get_schedule(channel, tz):
 
     for i in range(7):
         schedule.set_date(d)
-        path = ch_code +d.strftime('.html?date=%Y-%m-%d')
+        path = ch_code + d.strftime('.html?date=%Y-%m-%d')
         tv_common = fetch(path)
         if tv_common is None:
             break
-            
+
         program = tv_common[1]
-        
+
         for row in program.find('table'):    # tv-channel-full
             schedule.set_time(row[0][0].text)
             cell = row[1]

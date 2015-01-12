@@ -47,7 +47,7 @@ class Schedule:
     def set_title(self, title):
         if title is None:
             return
-            
+
         show = self.shows[-1]
         show.title = title.rstrip('.')
         i = title.find('"')
@@ -65,7 +65,7 @@ class Schedule:
             show.summary = summary
             if show.key is not None:
                 self.summaries[show.key] = summary
-                
+
     def set_episode(self):
         self.shows[-1].episode = True
 

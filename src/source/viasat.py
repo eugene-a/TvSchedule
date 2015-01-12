@@ -5,7 +5,7 @@ from lxml.etree import HTMLParser, fromstring
 from pytz import timezone
 
 from schedule import Schedule
-from util import Platform,  PLATFORM, add_year, fixyear
+from util import Platform, PLATFORM, add_year, fixyear
 
 channel_code = {
     'VH1': '68',
@@ -19,7 +19,7 @@ channel_code = {
     'Cartoon Network': '87',
     'BBC World News': '80',
     'Disney XD': '907',
-    'TV1000 Premium': '975', 
+    'TV1000 Premium': '975',
 }
 
 

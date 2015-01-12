@@ -62,21 +62,21 @@ class ScheduleWriter:
         self.f_prog = f_prog
         self.f_sum = f_sum
 
-        self.source = {'9 Канал Израиль':  (channel9, )}
+        self.source = {'9 Канал Израиль': (channel9, )}
 
         vse_ch = (
-            'М1', 'OTV', '5 канал','Футбол+', 'ПлюсПлюс', 
-            'НТН', 'К1', 'Спорт', 'Боец', 'НТВ+ Теннис',  'Fashion TV'
+            'М1', 'OTV', '5 канал', 'Футбол+', 'ПлюсПлюс',
+            'НТН', 'К1', 'Спорт', 'Боец', 'НТВ+ Теннис', 'Fashion TV'
         )
 
         viasat_ch = (
             'VH1', 'Disney XD',
             'BBC World News', 'TV1000 Premium'
         )
-        
+
         self.source.update((ch, (vsetv,)) for ch in vse_ch)
         self.source.update((ch, (viasat,)) for ch in viasat_ch)
- 
+
     def find_schedule(self, channel, sources):
         if not isinstance(sources, tuple):
             sources = (sources,)
@@ -86,10 +86,8 @@ class ScheduleWriter:
                 return shows
         return []
 
-
     def get_schedule(self, channel, sources):
         return merge([self.find_schedule(channel, s) for s in sources])
-
 
     def write(self, channel):
         sources = self.source.get(channel) or (vsetv, akado)

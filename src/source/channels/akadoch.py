@@ -1,5 +1,5 @@
 channel_code = {
-'Первый канал': '1_kanal', 
+'Первый канал': '1_kanal',
 'Россия': 'rossiya',
 'НТВ': 'ntv',
 'СТС': 'sts',
@@ -52,7 +52,7 @@ channel_code = {
 'Комедия ТВ': 'komediya_tv',
 'TV XXI': 'tv_xxi',
 'TНТ-Comedy': 'komedi_tv',
-'Ретро': 'retro_tv', 
+'Ретро': 'retro_tv',
 'КХЛ ТВ': 'khl',
 'BabyTV': 'baby_tv',
 'Disney Channel': 'disney_channel',
@@ -66,7 +66,7 @@ channel_code = {
 'JimJam': 'jimjam',
 'TiJi': 'tiji',
 'Gulli': 'gulli',
-'Драйв': 'drive', 
+'Драйв': 'drive',
 'Авто плюс': 'avtoplyus_tv',
 'Телекафе': 'telekafe',
 'Шансон ТВ': 'shanson_tv',
@@ -95,9 +95,9 @@ channel_code = {
 'Еда': 'eda',
 'Беларусь 24': 'belarys-tv',
 'Киноклуб': 'kinoklyb',
-'Кино плюс': 'kino_pljus', 
+'Кино плюс': 'kino_pljus',
 'Еврокино': 'evrokino',
-'Спас': 'spas', 
+'Спас': 'spas',
 'CBS Drama': 'cbs_drama',
 'CBS Reality': 'cbs_reality'
 }

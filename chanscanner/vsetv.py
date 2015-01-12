@@ -19,6 +19,6 @@ with open('../output/vsetv.txt', 'w') as f:
         chlogo = table[3][0][2]
         if chlogo.tag == 'div':
             channel = chlogo[0].get('alt')
-            s = "'{0}': '{1}',".format(channel,  i)
+            s = "'{0}': '{1}',".format(channel, i)
             f.write(s + '\n')
             print(s)

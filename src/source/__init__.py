@@ -1,1 +1,1 @@
-__all__ = ['viasat', 'vsetv',  'akado',  'channel9']
+__all__ = ['viasat', 'vsetv', 'akado', 'channel9']

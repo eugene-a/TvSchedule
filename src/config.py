@@ -20,8 +20,8 @@ class Config:
             config.set('Output', 'summaries', r'%(dir)s\tv_summaries.txt')
             config.set('Output', 'missing', r'%(dir)s\tv_missing.txt')
 
-            with open(config_file, 'w') as file:
-                config.write(file)
+            with open(config_file, 'w') as cfile:
+                config.write(cfile)
 
         self.config = config
 

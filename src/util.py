@@ -9,30 +9,41 @@ class Platform(Enum):
     Windows = 1
     Linux = 2
 
-try:
-    PLATFORM = Platform[system()]
-except KeyError:
-    raise Exception(system() + ': unsupported platform')
 
-MONTH = YEAR = YEAR_STR = None
+def set_platform():
+    platform = system()
+    global PLATFORM
+    try:
+        PLATFORM = Platform[platform]
+    except KeyError:
+        raise Exception(platform + ': unsupported platform')
 
-def init():
-    global MONTH, YEAR,  YEAR_STR, TIMEZONE
 
+def set_year_and_month():
+    global MONTH, YEAR, YEAR_STR
     today = date.today()
 
-    MONTH = today.month
     YEAR = today.year
     YEAR_STR = ' ' + str(YEAR)
+    MONTH = today.month
 
+PLATFORM = YEAR = YEAR_STR = MONTH = None
+
+
+def locale_ru():
+    global PLATFORM
     if PLATFORM is Platform.Windows:
-        ru_locale = 'Russian_Russia.1251'
+        return 'Russian_Russia.1251'
     else:
-        ru_locale = 'ru_RU.CP1251'
+        return 'ru_RU.CP1251'
 
-    setlocale(LC_CTYPE, ru_locale)
-    setlocale(LC_TIME, ru_locale)
 
+def init():
+    set_platform()
+    locale = locale_ru()
+    setlocale(LC_CTYPE, locale)
+    setlocale(LC_TIME, locale)
+    set_year_and_month()
 
 init()
 del init
@@ -51,8 +62,8 @@ def fixyear(date):
     return date
 
 
-def get_date(month,  day):
-    return fixyear(date(YEAR,  month,  day))
+def get_date(month, day):
+    return fixyear(date(YEAR, month, day))
 
 
 #For strptime.
@@ -96,9 +107,11 @@ def extract_text(elem):
     elem_tail = elem.tail or ''
     return ('\n' if elem.tag == 'br' else elem.text or '') + elem_tail
 
+
 def no_idle():
     if PLATFORM is Platform.Windows:
         from ctypes import windll
         es_system_required = 0x00000001
         es_continuous = 0x80000000
-        windll.kernel32.SetThreadExecutionState(es_system_required | es_continuous)
+        windll.kernel32.SetThreadExecutionState(
+            es_system_required | es_continuous)
