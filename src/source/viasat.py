@@ -5,7 +5,7 @@ from lxml.etree import HTMLParser, fromstring
 from pytz import timezone
 
 from schedule import Schedule
-from util import PLATFORM, add_year, fixyear
+from util import Platform,  PLATFORM, add_year, fixyear
 
 channel_code = {
     'VH1': '68',
@@ -26,7 +26,7 @@ channel_code = {
 #convert from '%a, %d. %b' strftime/strptime format on Windows
 #to the same on the native platform (Linux)
 def fromwin(s):
-    if PLATFORM != 'Windows':
+    if PLATFORM is Platform.Linux:
         month_map = {
             'Фев': 'Февр.', 'Мар': 'Марта', 'Май': 'Мая',
             'Сен': 'Сент.', 'Ноя': 'Нояб.'

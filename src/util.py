@@ -2,10 +2,19 @@ import re
 from platform import system
 from locale import setlocale, LC_CTYPE, LC_TIME
 from datetime import date
+from enum import Enum
 
-PLATFORM = system()
+
+class Platform(Enum):
+    Windows = 1
+    Linux = 2
+
+try:
+    PLATFORM = Platform[system()]
+except KeyError:
+    raise Exception(system() + ': unsupported platform')
+
 MONTH = YEAR = YEAR_STR = None
-
 
 def init():
     global MONTH, YEAR,  YEAR_STR, TIMEZONE
@@ -16,12 +25,10 @@ def init():
     YEAR = today.year
     YEAR_STR = ' ' + str(YEAR)
 
-    if PLATFORM == 'Windows':
+    if PLATFORM is Platform.Windows:
         ru_locale = 'Russian_Russia.1251'
-    elif PLATFORM == 'Linux':
-        ru_locale = 'ru_RU.CP1251'
     else:
-        raise Exception(PLATFORM + ': unsupported platform')
+        ru_locale = 'ru_RU.CP1251'
 
     setlocale(LC_CTYPE, ru_locale)
     setlocale(LC_TIME, ru_locale)
@@ -90,7 +97,7 @@ def extract_text(elem):
     return ('\n' if elem.tag == 'br' else elem.text or '') + elem_tail
 
 def no_idle():
-    if PLATFORM == 'Windows':
+    if PLATFORM is Platform.Windows:
         from ctypes import windll
         es_system_required = 0x00000001
         es_continuous = 0x80000000
