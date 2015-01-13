@@ -2,17 +2,17 @@ from datetime import date, datetime
 from env import windows
 
 
-def _set_year_and_month():
-    global _MONTH, _YEAR, _YEAR_STR
+def _set_month_and_year():
+    global _MONTH, _YEAR
+ 
     today = date.today()
-
-    _YEAR = today.year
-    _YEAR_STR = ' ' + str(_YEAR)
     _MONTH = today.month
+    _YEAR = today.year
 
-_YEAR = _YEAR_STR = _MONTH = None
-_set_year_and_month()
-del _set_year_and_month
+_MONTH = _YEAR = None
+_set_month_and_year()
+
+del _set_month_and_year
 
 
 def genitive_month(s):
@@ -48,6 +48,7 @@ def _fixyear(date):
         date.replace(date.year - 1)
     return date
 
+_YEAR_STR = ' ' + str(_YEAR)
 
 def parse_date(s, format):
     if format[-1] == 'B':
