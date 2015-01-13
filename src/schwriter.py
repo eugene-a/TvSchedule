@@ -1,32 +1,34 @@
+import re
 import socket
 import heapq
 from http.client import HTTPException
-from datetime import timedelta
+from datetime import date, timedelta
+from contextlib import closing
 
 from tzlocal import get_localzone
 
 from config import Config
-from util import genitive_month, prepare
+from dateutil import genitive_month
 from source import *
 
 
-def info_value(show):
+def _info_value(show):
     return 0x10000 * show.episode + len(show.summary or '')
 
-DEL_MAP = dict((ord(c), None) for c in '.,/-()" ')
+_DEL_MAP = dict((ord(c), None) for c in '.,/-()" ')
 
 
-def uniform(s):
-    s = s.translate(DEL_MAP).lower()
+def _uniform(s):
+    s = s.translate(_DEL_MAP).lower()
     s = s.replace('год', 'г')
     s = s.replace('эпизод', '')
     return s.replace('эп', '')
 
 
-TRESHOLD = timedelta(minutes=20)
+_TRESHOLD = timedelta(minutes=20)
 
 
-def merge(shows):
+def _merge(shows):
     shows = heapq.merge(*shows)
 
     last = None
@@ -37,30 +39,57 @@ def merge(shows):
             if show == last:
                 if show.title is not None and len(show.title) > len(last.title):
                     last.title = show.title
-                if info_value(show) > info_value(last):
+                if _info_value(show) > _info_value(last):
                     last.summary = show.summary
                 if last.summary is not None:
-                    if uniform(last.summary) == uniform(last.title):
+                    if _uniform(last.summary) == _uniform(last.title):
                         last.summary = None
             elif show.key is not None:
                 timediff = show.datetime - last.datetime
-                if timediff < TRESHOLD or show.title not in last.title:
+                if timediff < _TRESHOLD or show.title not in last.title:
                     yield last
                     last = show
     if last is not None:
         yield last
 
 
-class ScheduleWriter:
-    def __init__(self, f_prog, f_sum):
+# ListTV chokes if it encounters a date within text
+# This can be avoided by replacing spaces separating day and month
+# with something else
+def _create_date_pattern():
+    d = date(1900, 1, 1)
+    gm = genitive_month
+    pattern = r'(\d{1,2}) +(' + '|'.join(
+        (gm(d.replace(month=m).strftime('%B')) for m in range(1, 13))
+    ) + ')'
+    return re.compile(pattern, re.I | re.U)
+
+_DATE_PATTERN = _create_date_pattern()
+del _create_date_pattern
+
+
+def _prepare_summary(s):
+    s = s.strip()
+    s = re.sub(r'\s+\n', '\n', s)                      # remove trailing spaces
+    s = re.sub(r'\n+', '\n', s)                         # remove empty lines
+    s = re.sub(r'(\w)\n', r'\1.\n', s)              # end line with a period
+    return re.sub(_DATE_PATTERN, r'\1-\2', s)  # dash between day and month
+
+
+def _open(name, mode='r', encoding='cp1251', errors=None):
+    return open(name, mode, encoding=encoding, errors=errors)
+
+
+class _ScheduleWriter:
+    def __init__(self, prog_name, sum_name):
+        self.f_prog = _open(prog_name, 'w', 'cp1251m', 'replace')
+        self.f_sum = _open(sum_name, 'w', 'cp1251m', 'replace')
+
         schedule_header = 'tv.all\n'
-        f_prog.write(schedule_header)
-        f_sum.write(schedule_header)
+        self.f_prog.write(schedule_header)
+        self.f_sum.write(schedule_header)
 
         self.tz = get_localzone()
-
-        self.f_prog = f_prog
-        self.f_sum = f_sum
 
         self.source = {'9 Канал Израиль': (channel9, )}
 
@@ -77,7 +106,7 @@ class ScheduleWriter:
         self.source.update((ch, (vsetv,)) for ch in vse_ch)
         self.source.update((ch, (viasat,)) for ch in viasat_ch)
 
-    def find_schedule(self, channel, sources):
+    def _find_schedule(self, channel, sources):
         if not isinstance(sources, tuple):
             sources = (sources,)
         for source in sources:
@@ -86,14 +115,14 @@ class ScheduleWriter:
                 return shows
         return []
 
-    def get_schedule(self, channel, sources):
-        return merge([self.find_schedule(channel, s) for s in sources])
+    def _get_schedule(self, channel, sources):
+        return _merge([self._find_schedule(channel, s) for s in sources])
 
     def write(self, channel):
         sources = self.source.get(channel) or (vsetv, akado)
 
         last_date = None
-        for show in self.get_schedule(channel, sources):
+        for show in self._get_schedule(channel, sources):
             date = show.datetime.date()
             if date != last_date:
                 s = date.strftime('%A, %d %B').title()
@@ -112,30 +141,32 @@ class ScheduleWriter:
                     self.f_sum.write(summary_date)
                     summary_date = None
                 self.f_sum.write(show_str)
-                self.f_sum.write(prepare(summary) + '\n')
+                self.f_sum.write(_prepare_summary(summary) + '\n')
         return last_date is not None
 
-
-def open_output(name):
-    return open(name, 'w', encoding='cp1251m', errors='replace')
+    def close(self):
+        self.f_prog.close()
+        self.f_sum.close()
 
 
 def write_schedule(config_file):
     config = Config(config_file)
 
-    with open_output(config.schedule()) as f_prog:
-        with open_output(config.summaries()) as f_sum:
-            with open(config.missing(), 'w', encoding='cp1251') as f_missing:
-                writer = ScheduleWriter(f_prog, f_sum)
-                with open(config.channels(), encoding='cp1251') as channels:
-                    for line in channels:
-                        line = line.rstrip()
-                        print(line)
-                        try:
-                            result = writer.write(line[line.find('.') + 2:])
-                        except socket.error:
-                            result = False
-                        except HTTPException:
-                            result = False
-                        if not result:
-                            f_missing.write(line + '\n')
+    prog = config.schedule()
+    summ = config.summaries()
+    miss = config.missing()
+    chan = config.channels()
+
+    with closing(_ScheduleWriter(prog, summ)) as writer:
+        with _open(miss, 'w') as f_missing, _open(chan) as f_channels:
+            for line in f_channels:
+                line = line.rstrip()
+                print(line)
+                try:
+                    result = writer.write(line[line.find('.') + 2:])
+                except socket.error:
+                    result = False
+                except HTTPException:
+                    result = False
+                if not result:
+                    f_missing.write(line + '\n')

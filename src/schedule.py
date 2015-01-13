@@ -77,4 +77,3 @@ class Schedule:
         self.shows = []
         self.summaries.clear()
         return shows
-

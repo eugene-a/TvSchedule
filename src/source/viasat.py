@@ -1,11 +1,9 @@
-from datetime import datetime
-
 from httplib2 import Http
 from lxml.etree import HTMLParser, fromstring
 from pytz import timezone
 
 from schedule import Schedule
-from util import Platform, PLATFORM, add_year, fixyear
+from dateutil import fromwin, parse_date
 
 channel_code = {
     'VH1': '68',
@@ -23,28 +21,6 @@ channel_code = {
 }
 
 
-#convert from '%a, %d. %b' strftime/strptime format on Windows
-#to the same on the native platform (Linux)
-def fromwin(s):
-    if PLATFORM is Platform.Linux:
-        month_map = {
-            'Фев': 'Февр.', 'Мар': 'Марта', 'Май': 'Мая',
-            'Сен': 'Сент.', 'Ноя': 'Нояб.'
-        }
-        arr = s.split(' ')
-
-        arr[0] = arr[0][: -1] + '.,'
-
-        month = month_map.get(arr[2])
-        if month is None:
-            arr[2] += '.' if arr[2][0] != 'И' else 'я'
-        else:
-            arr[2] = month
-
-        s = ' '.join(arr)
-    return s
-
-
 class Target:
     def start(self, tag, attrib):
         if tag == 'div':
@@ -57,9 +33,8 @@ class Target:
     def end(self, tag):
         if tag == 'div':
             if self.div_class == 'day_front':
-                s = fromwin(self.data_str)
-                d = datetime.strptime(add_year(s), '%a, %d. %b %Y')
-                self.schedule.set_date(fixyear(d))
+                date = parse_date(fromwin(self.data_str), '%a, %d. %b')
+                self.schedule.set_date(date)
             elif self.div_class == 'progtime':
                 self.schedule.set_time(self.data_str)
             elif self.div_class == 'descript':

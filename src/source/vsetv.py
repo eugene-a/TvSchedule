@@ -6,7 +6,7 @@ from httplib2 import Http
 from pytz import timezone
 
 from schedule import Schedule
-from util import nominative_month, add_year, fixyear
+from dateutil import parse_date
 from source.channels.vsetvch import channel_code
 
 
@@ -77,10 +77,8 @@ def get_schedule(channel, tz):
 
     for div in islice(fetch(path), 6, None):
         if div.get('class') == 'sometitle':
-            data = div[0][0][0].text
-            data = nominative_month(data)
-            d = datetime.strptime(add_year(data), '%A, %d %B %Y')
-            schedule.set_date(fixyear(d))
+            date = parse_date(div[0][0][0].text, '%A, %d %B')
+            schedule.set_date(date)
         else:
             for subd in div:
                 subd_class = subd.get('class')
