@@ -2,19 +2,6 @@ from datetime import date, datetime
 from env import windows
 
 
-def _set_month_and_year():
-    global _MONTH, _YEAR
-
-    today = date.today()
-    _MONTH = today.month
-    _YEAR = today.year
-
-_MONTH = _YEAR = None
-_set_month_and_year()
-
-del _set_month_and_year
-
-
 def genitive_month(s):
     return s + 'а' if s[-1] == 'т' else s[: -1] + 'я'
 
@@ -40,6 +27,16 @@ def _nominative_month(s):
     return s
 
 
+def _get_current_month_and_year():
+    today = date.today()
+    return (today.month, today.year)
+
+_MONTH, _YEAR = _get_current_month_and_year()
+_YEAR_STR = ' ' + str(_YEAR)
+
+del _get_current_month_and_year
+
+
 def _fixyear(date):
     mdelta = date.month - _MONTH
     if mdelta < -1:
@@ -47,8 +44,6 @@ def _fixyear(date):
     elif mdelta > 1:
         date.replace(date.year - 1)
     return date
-
-_YEAR_STR = ' ' + str(_YEAR)
 
 
 def parse_date(s, format):
