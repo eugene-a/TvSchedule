@@ -12,7 +12,7 @@ def _get_env():
             return 'Russian_Russia.1251'
 
     elif platform == 'Linux':
-        def windiws():
+        def windows():
             return False
 
         def locale_ru():
