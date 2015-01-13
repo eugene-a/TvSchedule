@@ -14,9 +14,12 @@ def _win2linux_month(month):
 
     return month_map.get(month) or month + ('.' if month[0] != 'И' else 'я')
 
-
-def fromwin(s):
-    return s if windows() else s[:2] + '.' + s[2:-3] + _win2linux_month(s[-3:])
+if windows():
+    def fromwin(s):
+        return s
+else:
+    def fromwin(s):
+        return s[:2] + '.' + s[2:-3] + _win2linux_month(s[-3:])
 
 
 def _nominative_month(s):
