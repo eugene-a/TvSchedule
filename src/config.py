@@ -28,6 +28,9 @@ class Config:
     def channels(self):
         return self.config.get('Input', 'channels')
 
+    def output_dir(self):
+        return self.config.get('Output', 'dir')
+
     def schedule(self):
         return self.config.get('Output', 'schedule')
 

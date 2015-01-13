@@ -1,6 +1,7 @@
 import re
 import socket
 import heapq
+from os import makedirs
 from http.client import HTTPException
 from datetime import date, timedelta
 from contextlib import closing
@@ -151,7 +152,8 @@ class _ScheduleWriter:
 
 def write_schedule(config_file):
     config = Config(config_file)
-
+    makedirs(config.output_dir(),  exist_ok=True)
+    
     prog = config.schedule()
     summ = config.summaries()
     miss = config.missing()
