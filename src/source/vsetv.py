@@ -1,4 +1,3 @@
-from datetime import datetime
 from itertools import islice
 
 from lxml.etree import fromstring, HTMLParser

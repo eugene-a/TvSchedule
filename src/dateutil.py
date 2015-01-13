@@ -4,7 +4,7 @@ from env import windows
 
 def _set_month_and_year():
     global _MONTH, _YEAR
- 
+
     today = date.today()
     _MONTH = today.month
     _YEAR = today.year
@@ -49,6 +49,7 @@ def _fixyear(date):
     return date
 
 _YEAR_STR = ' ' + str(_YEAR)
+
 
 def parse_date(s, format):
     if format[-1] == 'B':
