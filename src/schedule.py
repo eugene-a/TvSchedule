@@ -27,7 +27,7 @@ class Schedule:
     def __init__(self, local_tz, source_tz):
         self.local_tz, self.source_tz = local_tz, source_tz
         self.shows = []
-        #a stored summary is used when the show is repeated later in a week
+        # a stored summary is used when the show is repeated later in a week
         self.summaries = {}
 
     def set_date(self, date):
@@ -40,7 +40,7 @@ class Schedule:
             self.source_date += timedelta(1)
         self.source_hour = hour
         dt = datetime.combine(self.source_date, time(hour, minute))
-        #convert to local time zone
+        # convert to local time zone
         dt = self.source_tz.localize(dt).astimezone(self.local_tz)
         self.shows.append(Show(dt))
 

@@ -26,7 +26,7 @@ del init
 
 cp1251m.register()
 
-#print ukrainian 'i' to console as latin 'i'
+# print ukrainian 'i' to console as latin 'i'
 cp866.encoding_map[ord('і')] = cp866.encoding_map[ord('i')]
 
 write_schedule('tv_schedule.ini')
