@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime,  timedelta
 from env import windows
 
 
@@ -44,13 +44,13 @@ del _get_month_and_year
 
 
 # check if there is a closer date across a year boundary
-def _fixyear(date):
-    mdelta = date.month - _MONTH
+def _fixyear(d):
+    mdelta = d.month - _MONTH
     if mdelta < -6:
-        date.replace(date.year + 1)
+        d.replace(d.year + 1)
     elif mdelta > 6:
-        date.replace(date.year - 1)
-    return date
+        d.replace(d.year - 1)
+    return d
 
 
 # parse a date string with no year information
@@ -61,3 +61,11 @@ def parse_date(s, format):
     #  initially assume the current year
     dt = datetime.strptime(s + _YEAR, format + ' %Y')
     return _fixyear(dt.date())
+
+# the latest date of the given weekday on or before the given date
+def last_weekday(d,  weekday):
+    delta = d.weekday() - weekday
+    if delta < 0:
+        delta += 7
+    return d - timedelta(delta)
+    

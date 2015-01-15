@@ -5,25 +5,21 @@ from httplib2 import Http
 from lxml.etree import fromstring, HTMLParser
 
 from schedule import Schedule
+from dateutil import last_weekday
 from source.channels.akadoch import channel_code
 
-source_tz = timezone('Europe/Moscow')
+_SOURCE_TZ = timezone('Europe/Moscow')
+_LAST_MONDAY = last_weekday(datetime.now(_SOURCE_TZ).date(), 0)
+_DAYDELTA = timedelta(1)
+_URL = 'http://tv.akado.ru/channels/'
 
-today = datetime.now(source_tz).date()
-monday = today - timedelta(today.weekday())
-
-del today
-
-daydelta = timedelta(1)
-
-http = Http()
-parser = HTMLParser(encoding='utf-8')
+_http = Http()
+_parser = HTMLParser(encoding='utf-8')
 
 
-def fetch(path):
-    url = 'http://tv.akado.ru/channels/'
-    content = http.request(url + path)[1]
-    tv_layout = fromstring(content, parser)[1][0][4]
+def _fetch(path):
+    content = _http.request(_URL + path)[1]
+    tv_layout = fromstring(content, _parser)[1][0][4]
     if tv_layout.get('class') is not None:
         return tv_layout[0][0]   # tv-common
 
@@ -33,13 +29,13 @@ def get_schedule(channel, tz):
     if ch_code is None:
         return []
 
-    schedule = Schedule(tz, source_tz)
-    d = monday
+    schedule = Schedule(tz, _SOURCE_TZ)
+    d = _LAST_MONDAY
 
     for i in range(7):
         schedule.set_date(d)
         path = ch_code + d.strftime('.html?date=%Y-%m-%d')
-        tv_common = fetch(path)
+        tv_common = _fetch(path)
         if tv_common is None:
             break
 
@@ -53,6 +49,6 @@ def get_schedule(channel, tz):
             if summary is not None:
                 schedule.set_summary(summary)
 
-        d += daydelta
+        d += _DAYDELTA
 
     return schedule.pop()

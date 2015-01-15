@@ -83,35 +83,29 @@ def _open(name, mode='r', encoding='cp1251', errors=None):
 
 class _ScheduleWriter:
     def __init__(self, prog_name, sum_name):
-        self.f_prog = _open(prog_name, 'w', 'cp1251m', 'replace')
-        self.f_sum = _open(sum_name, 'w', 'cp1251m', 'replace')
+        self._f_prog = _open(prog_name, 'w', 'cp1251m', 'replace')
+        self._f_sum = _open(sum_name, 'w', 'cp1251m', 'replace')
 
         schedule_header = 'tv.all\n'
-        self.f_prog.write(schedule_header)
-        self.f_sum.write(schedule_header)
+        self._f_prog.write(schedule_header)
+        self._f_sum.write(schedule_header)
 
-        self.tz = get_localzone()
+        self._tz = get_localzone()
 
-        self.source = {'9 Канал Израиль': (channel9, )}
-
-        vse_ch = (
-            'М1', 'OTV', '5 канал', 'Футбол+', 'ПлюсПлюс',
-            'НТН', 'К1', 'Спорт', 'Боец', 'НТВ+ Теннис', 'Fashion TV'
-        )
+        self._source = {'9 Канал Израиль': (channel9, )}
 
         viasat_ch = (
             'VH1', 'Disney XD',
             'BBC World News', 'TV1000 Premium'
         )
 
-        self.source.update((ch, (vsetv,)) for ch in vse_ch)
-        self.source.update((ch, (viasat,)) for ch in viasat_ch)
+        self._source.update((ch, (viasat,)) for ch in viasat_ch)
 
     def _find_schedule(self, channel, sources):
         if not isinstance(sources, tuple):
             sources = (sources,)
         for source in sources:
-            shows = source.get_schedule(channel, self.tz)
+            shows = source.get_schedule(channel, self._tz)
             if len(shows) > 0:
                 return shows
         return []
@@ -120,7 +114,7 @@ class _ScheduleWriter:
         return _merge([self._find_schedule(channel, s) for s in sources])
 
     def write(self, channel):
-        sources = self.source.get(channel) or (vsetv, akado)
+        sources = self._source.get(channel) or (vsetv, akado)
 
         last_date = None
         for show in self._get_schedule(channel, sources):
@@ -130,24 +124,24 @@ class _ScheduleWriter:
                 s = '\n' + genitive_month(s) + '. '
                 show_date = s + channel + '\n'
                 summary_date = s + '(Анонс)' + channel + '\n'
-                self.f_prog.write(show_date)
+                self._f_prog.write(show_date)
                 last_date = date
             show_str = str(show) + '\n'
-            self.f_prog.write(show_str)
+            self._f_prog.write(show_str)
             summary = show.summary
             if summary is not None:
                 if summary.startswith(show. title):
                     summary = summary[len(show.title):].lstrip('. ')
                 if summary_date is not None:
-                    self.f_sum.write(summary_date)
+                    self._f_sum.write(summary_date)
                     summary_date = None
-                self.f_sum.write(show_str)
-                self.f_sum.write(_prepare_summary(summary) + '\n')
+                self._f_sum.write(show_str)
+                self._f_sum.write(_prepare_summary(summary) + '\n')
         return last_date is not None
 
     def close(self):
-        self.f_prog.close()
-        self.f_sum.close()
+        self._f_prog.close()
+        self._f_sum.close()
 
 
 def write_schedule(config_file):

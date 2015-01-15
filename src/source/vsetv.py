@@ -9,26 +9,25 @@ from dateutil import parse_date
 from source.channels.vsetvch import channel_code
 
 
-source_tz = timezone('Europe/Kiev')
-
-USER_AGENT = \
+_SOURCE_TZ = timezone('Europe/Kiev')
+_HEADERS = {
+    'user-agent':
     'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:22.0) Gecko/20100101 Firefox/22.0'
-HEADERS = {'user-agent': USER_AGENT}
-del USER_AGENT
+}
+_URL = 'http://www.vsetv.com/'
 
-http = Http()
-parser = HTMLParser()
+_http = Http()
+_parser = HTMLParser()
 
 
-def fetch(path):
-    url = 'http://www.vsetv.com/'
-    content = http.request(url + path, headers=HEADERS)[1]
-    doc = fromstring(content, parser)
+def _fetch(path):
+    content = _http.request(_URL + path, headers=_HEADERS)[1]
+    doc = fromstring(content, _parser)
     return doc[3][6][3][0]  # main    (4 comments between top and base tables)
 
 
-def get_summary(path):
-    table = fetch(path)[1]
+def _get_summary(path):
+    table = _fetch(path)[1]
     if table.get('id') is None:
         return
 
@@ -61,7 +60,7 @@ def get_summary(path):
         else:
             summary += elem.text + elem.tail
 
-    return  summary
+    return summary
 
 
 def get_schedule(channel, tz):
@@ -71,10 +70,10 @@ def get_schedule(channel, tz):
 
     path = 'schedule_channel_' + ch_code + '_week.html'
 
-    schedule = Schedule(tz, source_tz)
+    schedule = Schedule(tz, _SOURCE_TZ)
     summaries = {}
 
-    for div in islice(fetch(path), 6, None):
+    for div in islice(_fetch(path), 6, None):
         if div.get('class') == 'sometitle':
             date = parse_date(div[0][0][0].text, '%A, %d %B')
             schedule.set_date(date)
@@ -96,7 +95,7 @@ def get_schedule(channel, tz):
                         key = path[: path.find('.')]
                         summary = summaries.get(key)
                         if summary is None:
-                            summary = get_summary(path)
+                            summary = _get_summary(path)
                             summaries[key] = summary
                         if summary:
                             schedule.set_summary(summary)
