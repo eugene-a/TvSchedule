@@ -31,6 +31,7 @@ def _uniform(s):
 _TRESHOLD = timedelta(minutes=20)
 
 
+# combine info from multiple sources
 def _merge(shows):
     shows = heapq.merge(*shows)
 
@@ -50,6 +51,8 @@ def _merge(shows):
                         last.summary = None
             elif show.key is not None:
                 timediff = show.datetime - last.datetime
+                # work around the case when multiple shows in a source
+                #  are presented as a single show in another source
                 if timediff < _TRESHOLD or show.title not in last.title:
                     yield last
                     last = show
