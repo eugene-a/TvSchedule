@@ -80,8 +80,14 @@ def _prepare_summary(s):
     return re.sub(_DATE_PATTERN, r'\1-\2', s)  # dash between day and month
 
 
-def _open(name, mode='r', encoding='cp1251', errors=None):
-    return open(name, mode, encoding=encoding, errors=errors)
+# open a file with UTF-8-encoded text content for reading
+def _open_r(name):
+    return open(name, encoding='utf-8',)
+
+
+# open a file for writing text data  using CP1251 encoding
+def _open_w(name, encoding='cp1251', errors=None):
+    return open(name, 'w', encoding=encoding, errors=errors)
 
 
 # import module, load and set channel code dictionary in it if required,
@@ -92,15 +98,15 @@ def _get_source(source, dir):
     else:
         module = import_module('source.' + source)
         if(module.LOAD_CHANNEL_CODE):
-            with open(join(dir, source + '.json')) as fp:
+            with _open_r(join(dir, source + '.json')) as fp:
                 module.channel_code = load(fp)
         return module.get_schedule
 
 
 class _ScheduleWriter:
     def __init__(self, config):
-        self._f_prog = _open(config.schedule(), 'w', 'cp1251m', 'replace')
-        self._f_sum = _open(config.summaries(), 'w', 'cp1251m', 'replace')
+        self._f_prog = _open_w(config.schedule(), 'cp1251m', 'replace')
+        self._f_sum = _open_w(config.summaries(), 'cp1251m', 'replace')
 
         input_dir = config.input_dir()
         default_source = config.default_source()
@@ -170,7 +176,7 @@ def write_schedule(config_file):
     chan = config.channels()
 
     with closing(_ScheduleWriter(config)) as writer:
-        with _open(miss, 'w') as f_missing, _open(chan) as f_channels:
+        with _open_w(miss) as f_missing, _open_r(chan) as f_channels:
             for line in f_channels:
                 line = line.rstrip()
                 print(line)

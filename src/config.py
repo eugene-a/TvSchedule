@@ -10,7 +10,7 @@ class Config:
         config = ConfigParser()
 
         if exists(config_file):
-            config.read(config_file)
+            config.read_file(open(config_file, encoding='utf-8'))
         else:
             config.add_section('Input')
             config.set('Input', 'dir', '../input')
