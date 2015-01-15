@@ -52,7 +52,7 @@ def _merge(shows):
             elif show.key is not None:
                 timediff = show.datetime - last.datetime
                 # work around the case when multiple shows in a source
-                #  are presented as a single show in another source
+                # are presented as a single show in another source
                 if timediff < _TRESHOLD or show.title not in last.title:
                     yield last
                     last = show
