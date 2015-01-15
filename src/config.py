@@ -1,4 +1,3 @@
-from os.path import exists
 from configparser import ConfigParser
 from os.path import join
 from json import loads
@@ -9,9 +8,9 @@ class Config:
 
         config = ConfigParser()
         config.read_file(open(config_file, encoding='utf-8'))
-        
+
         modified = False
-        
+
         if not config.has_section('Input'):
             config.add_section('Input')
             config.set('Input', 'dir', join('..', 'input'))
@@ -29,7 +28,7 @@ class Config:
             config.set('Output', 'missing',
                        join('%(dir)s', 'tv_missing.txt'))
             modified = True
-            
+
         if modified:
             with open(config_file, 'w') as cfile:
                 config.write(cfile)
