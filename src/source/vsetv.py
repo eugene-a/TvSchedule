@@ -6,8 +6,10 @@ from pytz import timezone
 
 from schedule import Schedule
 from dateutil import parse_date
-from source.channels.vsetvch import channel_code
 
+
+LOAD_CHANNEL_CODE = True
+channel_code = None
 
 _SOURCE_TZ = timezone('Europe/Kiev')
 _HEADERS = {

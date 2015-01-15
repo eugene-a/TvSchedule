@@ -5,20 +5,8 @@ from pytz import timezone
 from schedule import Schedule
 from dateutil import fromwin, parse_date
 
-channel_code = {
-    'VH1': '68',
-    'TV1000': '977',
-    'TV1000 Русское кино': '978',
-    'TV1000 Action': '976',
-    'Diva Universal': '24',
-    'Travel Channel': '48',
-    'Viasat History': '973',
-    'TVCI': '104',
-    'Cartoon Network': '87',
-    'BBC World News': '80',
-    'Disney XD': '907',
-    'TV1000 Premium': '975',
-}
+LOAD_CHANNEL_CODE = True
+channel_code = None
 
 
 class _Target:

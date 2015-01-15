@@ -6,6 +6,8 @@ from pytz import timezone
 from dateutil import last_weekday
 from schedule import Schedule
 
+LOAD_CHANNEL_CODE = False
+
 
 def fetch(url, parser):
     etree = parse(url, parser)

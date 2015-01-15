@@ -2,6 +2,9 @@ import re
 import socket
 import heapq
 from os import makedirs
+from os.path import join
+from importlib import import_module
+from json import load
 from http.client import HTTPException
 from datetime import date, timedelta
 from contextlib import closing
@@ -10,7 +13,6 @@ from tzlocal import get_localzone
 
 from config import Config
 from dateutil import genitive_month
-from source import *
 
 
 def _info_value(show):
@@ -38,8 +40,9 @@ def _merge(shows):
             last = show
         else:
             if show == last:
-                if show.title is not None and len(show.title) > len(last.title):
-                    last.title = show.title
+                if show.title is not None:
+                    if len(show.title) > len(last.title):
+                        last.title = show.title
                 if _info_value(show) > _info_value(last):
                     last.summary = show.summary
                 if last.summary is not None:
@@ -81,10 +84,27 @@ def _open(name, mode='r', encoding='cp1251', errors=None):
     return open(name, mode, encoding=encoding, errors=errors)
 
 
+# import module, load and set channel code dictionary in it if required,
+# return 'get_schedule' method
+def _get_source(source, dir):
+    if isinstance(source, list):
+        return [_get_source(s, dir) for s in source]
+    else:
+        module = import_module('source.' + source)
+        if(module.LOAD_CHANNEL_CODE):
+            with open(join(dir, source + '.json')) as fp:
+                module.channel_code = load(fp)
+        return module.get_schedule
+
+
 class _ScheduleWriter:
-    def __init__(self, prog_name, sum_name):
-        self._f_prog = _open(prog_name, 'w', 'cp1251m', 'replace')
-        self._f_sum = _open(sum_name, 'w', 'cp1251m', 'replace')
+    def __init__(self, config):
+        self._f_prog = _open(config.schedule(), 'w', 'cp1251m', 'replace')
+        self._f_sum = _open(config.summaries(), 'w', 'cp1251m', 'replace')
+
+        input_dir = config.input_dir()
+        default_source = config.default_source()
+        self._default_source = _get_source(default_source, input_dir)
 
         schedule_header = 'tv.all\n'
         self._f_prog.write(schedule_header)
@@ -92,20 +112,18 @@ class _ScheduleWriter:
 
         self._tz = get_localzone()
 
-        self._source = {'9 Канал Израиль': (channel9, )}
+        self._source = {}
 
-        viasat_ch = (
-            'VH1', 'Disney XD',
-            'BBC World News', 'TV1000 Premium'
-        )
-
-        self._source.update((ch, (viasat,)) for ch in viasat_ch)
+        sources = config.sources()
+        for s in sources:
+            source = _get_source(s[0], input_dir)
+            self._source.update((ch, [source, ]) for ch in s[1])
 
     def _find_schedule(self, channel, sources):
-        if not isinstance(sources, tuple):
-            sources = (sources,)
+        if not isinstance(sources, list):
+            sources = [sources, ]
         for source in sources:
-            shows = source.get_schedule(channel, self._tz)
+            shows = source(channel, self._tz)
             if len(shows) > 0:
                 return shows
         return []
@@ -114,7 +132,7 @@ class _ScheduleWriter:
         return _merge([self._find_schedule(channel, s) for s in sources])
 
     def write(self, channel):
-        sources = self._source.get(channel) or (vsetv, akado)
+        sources = self._source.get(channel) or self._default_source
 
         last_date = None
         for show in self._get_schedule(channel, sources):
@@ -148,12 +166,10 @@ def write_schedule(config_file):
     config = Config(config_file)
     makedirs(config.output_dir(), exist_ok=True)
 
-    prog = config.schedule()
-    summ = config.summaries()
     miss = config.missing()
     chan = config.channels()
 
-    with closing(_ScheduleWriter(prog, summ)) as writer:
+    with closing(_ScheduleWriter(config)) as writer:
         with _open(miss, 'w') as f_missing, _open(chan) as f_channels:
             for line in f_channels:
                 line = line.rstrip()

@@ -6,7 +6,10 @@ from lxml.etree import fromstring, HTMLParser
 
 from schedule import Schedule
 from dateutil import last_weekday
-from source.channels.akadoch import channel_code
+
+LOAD_CHANNEL_CODE = True
+channel_code = None
+
 
 _SOURCE_TZ = timezone('Europe/Moscow')
 _LAST_MONDAY = last_weekday(datetime.now(_SOURCE_TZ).date(), 0)
