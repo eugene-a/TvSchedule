@@ -8,26 +8,29 @@ class Config:
     def __init__(self, config_file):
 
         config = ConfigParser()
-
-        if exists(config_file):
-            config.read_file(open(config_file, encoding='utf-8'))
-        else:
+        config.read_file(open(config_file, encoding='utf-8'))
+        
+        modified = False
+        
+        if not config.has_section('Input'):
             config.add_section('Input')
-            config.set('Input', 'dir', '../input')
-            config.set('Input', 'channels', '%(dir)s/tv_channels.txt')
+            config.set('Input', 'dir', join('..', 'input'))
+            config.set('Input', 'channels',
+                       join('%(dir)s', 'tv_channels.txt'))
+            modified = True
 
+        if not config.has_section('Output'):
             config.add_section('Output')
-            config.set('Output', 'dir', '/output')
-
+            config.set('Output', 'dir',  join('..', 'output'))
             config.set('Output', 'schedule',
                        join('%(dir)s', 'tv_schedule.txt'))
-
             config.set('Output', 'summaries',
                        join('%(dir)s', 'tv_summaries.txt'))
-
             config.set('Output', 'missing',
                        join('%(dir)s', 'tv_missing.txt'))
-
+            modified = True
+            
+        if modified:
             with open(config_file, 'w') as cfile:
                 config.write(cfile)
 
