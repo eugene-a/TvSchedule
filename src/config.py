@@ -20,7 +20,7 @@ class Config:
 
         if not config.has_section('Output'):
             config.add_section('Output')
-            config.set('Output', 'dir',  join('..', 'output'))
+            config.set('Output', 'dir', join('..', 'output'))
             config.set('Output', 'schedule',
                        join('%(dir)s', 'tv_schedule.txt'))
             config.set('Output', 'summaries',

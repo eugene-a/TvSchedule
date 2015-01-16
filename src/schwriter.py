@@ -128,6 +128,7 @@ class _ScheduleWriter:
             source = _get_source(s[0], input_dir)
             self._source.update((ch, [source, ]) for ch in s[1])
 
+    #  retirn the channel program from the first source found to have one
     def _find_schedule(self, channel, sources):
         if not isinstance(sources, list):
             sources = [sources, ]
