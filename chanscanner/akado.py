@@ -10,4 +10,3 @@ with open('../output/akado.txt', 'w') as f:
         for row in table[1]:
             a = row[0][0][0]
             f.write("'{0}': '{1}',\n".format(a.text, a.get('href')[:-5]))
-
