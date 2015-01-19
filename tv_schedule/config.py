@@ -110,7 +110,6 @@ add_constructor('!src', _get_source)
 
 
 def get_sources():
-
     class Sources:
         def __init__(self, dct):
             self.default = dct['default']
