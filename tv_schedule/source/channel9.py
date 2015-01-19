@@ -6,10 +6,12 @@ from pytz import timezone
 from dateutil import last_weekday
 from schedule import Schedule
 
-LOAD_CHANNEL_CODE = False
+
+def need_channel_code():
+    return False
 
 
-def fetch(url, parser):
+def _fetch(url, parser):
     etree = parse(url, parser)
     return etree.getroot()[1][1][6][0]
 
@@ -25,7 +27,7 @@ def get_schedule(channel, tz):
 
     d = last_weekday(datetime.now(source_tz).date(), 6)  # start from Sunday
 
-    for tv_program in islice(fetch(url, parser), 2, 9):
+    for tv_program in islice(_fetch(url, parser), 2, 9):
         schedule.set_date(d)
         for li in tv_program[0]:
             span = li[0]

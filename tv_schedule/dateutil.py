@@ -38,14 +38,14 @@ def _nominative_month(s):
 def _get_month_and_year(d):
     return (d.month, ' ' + str(d.year))
 
-_MONTH, _YEAR = _get_month_and_year(date.today())
+_month, _year = _get_month_and_year(date.today())
 
 del _get_month_and_year
 
 
 # check if there is a closer date across a year boundary
 def _fixyear(d):
-    mdelta = d.month - _MONTH
+    mdelta = d.month - _month
     if mdelta < -6:
         d.replace(d.year + 1)
     elif mdelta > 6:
@@ -59,8 +59,9 @@ def parse_date(s, format):
     if format[-1] == 'B':
         s = _nominative_month(s)
     #  initially assume the current year
-    dt = datetime.strptime(s + _YEAR, format + ' %Y')
+    dt = datetime.strptime(s + _year, format + ' %Y')
     return _fixyear(dt.date())
+
 
 # the latest date of the given weekday on or before the given date
 def last_weekday(d,  weekday):
@@ -68,4 +69,3 @@ def last_weekday(d,  weekday):
     if delta < 0:
         delta += 7
     return d - timedelta(delta)
-    

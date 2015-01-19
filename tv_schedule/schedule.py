@@ -22,7 +22,7 @@ class Show:
     def __str__(self):
         return self.datetime.strftime('%H:%M ') + self.title
 
-_DAYDELTA = timedelta(1)
+_daydelta = timedelta(1)
 
 
 class Schedule:
@@ -39,7 +39,7 @@ class Schedule:
     def set_time(self, t):
         hour, minute = (int(s) for s in t.split(':')[:2])
         if hour < self._source_hour:
-            self._source_date += _DAYDELTA
+            self._source_date += _daydelta
         self._source_hour = hour
         dt = datetime.combine(self._source_date, time(hour, minute))
         # convert to local time zone

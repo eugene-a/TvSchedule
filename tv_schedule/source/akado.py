@@ -7,13 +7,16 @@ from lxml.etree import fromstring, HTMLParser
 from schedule import Schedule
 from dateutil import last_weekday
 
-LOAD_CHANNEL_CODE = True
+
+def need_channel_code():
+    return True
+
 channel_code = None
 
+_source_tz = timezone('Europe/Moscow')
+_last_monday = last_weekday(datetime.now(_source_tz).date(), 0)
+_daydelta = timedelta(1)
 
-_SOURCE_TZ = timezone('Europe/Moscow')
-_LAST_MONDAY = last_weekday(datetime.now(_SOURCE_TZ).date(), 0)
-_DAYDELTA = timedelta(1)
 _URL = 'http://tv.akado.ru/channels/'
 
 _http = Http()
@@ -32,8 +35,8 @@ def get_schedule(channel, tz):
     if ch_code is None:
         return []
 
-    schedule = Schedule(tz, _SOURCE_TZ)
-    d = _LAST_MONDAY
+    schedule = Schedule(tz, _source_tz)
+    d = _last_monday
 
     for i in range(7):
         schedule.set_date(d)
@@ -52,6 +55,6 @@ def get_schedule(channel, tz):
             if summary is not None:
                 schedule.set_summary(summary)
 
-        d += _DAYDELTA
+        d += _daydelta
 
     return schedule.pop()

@@ -82,7 +82,7 @@ class _SourceBuilder:
             return [self._get_source(s) for s in source]
         else:
             module = import_module('source.' + source)
-            if(module.LOAD_CHANNEL_CODE):
+            if(module.need_channel_code()):
                 with _open(join(self.dir, source + '.yaml')) as fp:
                     module.channel_code = load(fp)
             return module.get_schedule

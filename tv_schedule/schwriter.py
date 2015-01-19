@@ -15,17 +15,16 @@ from dateutil import genitive_month
 def _info_value(show):
     return 0x10000 * show.episode + len(show.summary or '')
 
-_DEL_MAP = dict((ord(c), None) for c in '.,/-()" ')
+_del_map = dict((ord(c), None) for c in '.,/-()" ')
 
 
 def _uniform(s):
-    s = s.translate(_DEL_MAP).lower()
+    s = s.translate(_del_map).lower()
     s = s.replace('год', 'г')
     s = s.replace('эпизод', '')
     return s.replace('эп', '')
 
-
-_TRESHOLD = timedelta(minutes=20)
+_treshold = timedelta(minutes=20)
 
 
 # combine info from multiple sources
@@ -50,7 +49,7 @@ def _merge(shows):
                 # work around the case when multiple shows in a source
                 # are presented as a single show in another source
                 timediff = show.datetime - last.datetime
-                if timediff < _TRESHOLD or show.title not in last.title:
+                if timediff < _treshold or show.title not in last.title:
                     yield last
                     last = show
     if last is not None:
@@ -68,7 +67,7 @@ def _create_date_pattern():
     ) + ')'
     return re.compile(pattern, re.I | re.U)
 
-_DATE_PATTERN = _create_date_pattern()
+_date_pattern = _create_date_pattern()
 del _create_date_pattern
 
 
@@ -77,7 +76,7 @@ def _prepare_summary(s):
     s = re.sub(r'\s+\n', '\n', s)                      # remove trailing spaces
     s = re.sub(r'\n+', '\n', s)                         # remove empty lines
     s = re.sub(r'(\w)\n', r'\1.\n', s)              # end line with a period
-    return re.sub(_DATE_PATTERN, r'\1-\2', s)  # dash between day and month
+    return re.sub(_date_pattern, r'\1-\2', s)  # dash between day and month
 
 
 class _ScheduleWriter:
@@ -146,7 +145,7 @@ def _open_r(name):
 
 # open a file for writing text data  using CP1251 encoding
 def _open_w(name):
-    return open(name, 'w', encoding= 'cp1251', errors=None)
+    return open(name, 'w', encoding='cp1251', errors=None)
 
 
 # same as _open_w
@@ -159,7 +158,7 @@ def write_schedule():
     makedirs(config.output_dir(), exist_ok=True)
 
     with ExitStack() as stack:
-        f_channels = stack.enter_context( _open_r(config.channels()))
+        f_channels = stack.enter_context(_open_r(config.channels()))
         f_prog = stack.enter_context(_open_w_ext(config.schedule()))
         f_sum = stack.enter_context(_open_w_ext(config.summaries()))
         f_missing = stack.enter_context(_open_w(config.missing()))

@@ -5,7 +5,10 @@ from pytz import timezone
 from schedule import Schedule
 from dateutil import fromwin, parse_date
 
-LOAD_CHANNEL_CODE = True
+
+def need_channel_code():
+    return True
+
 channel_code = None
 
 
@@ -45,7 +48,7 @@ class _Target:
         pass
 
 
-_SOURCE_TZ = timezone('Europe/Riga')
+_source_tz = timezone('Europe/Riga')
 
 _http = Http()
 _parser = HTMLParser(target=_Target())
@@ -56,7 +59,7 @@ def get_schedule(channel, tz):
     if ch_code is None:
         return []
 
-    schedule = Schedule(tz, _SOURCE_TZ)
+    schedule = Schedule(tz, _source_tz)
     _parser.target.set_schedule(schedule)
 
     url = 'http://www.viasat.lv/viasat0/tv-programma27/'       \

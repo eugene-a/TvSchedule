@@ -8,14 +8,17 @@ from schedule import Schedule
 from dateutil import parse_date
 
 
-LOAD_CHANNEL_CODE = True
+def need_channel_code():
+    return True
+
 channel_code = None
 
-_SOURCE_TZ = timezone('Europe/Kiev')
-_HEADERS = {
+_source_tz = timezone('Europe/Kiev')
+_headers = {
     'user-agent':
     'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:22.0) Gecko/20100101 Firefox/22.0'
 }
+
 _URL = 'http://www.vsetv.com/'
 
 _http = Http()
@@ -23,7 +26,7 @@ _parser = HTMLParser()
 
 
 def _fetch(path):
-    content = _http.request(_URL + path, headers=_HEADERS)[1]
+    content = _http.request(_URL + path, headers=_headers)[1]
     doc = fromstring(content, _parser)
     return doc[3][6][3][0]  # main    (4 comments between top and base tables)
 
@@ -72,7 +75,7 @@ def get_schedule(channel, tz):
 
     path = 'schedule_channel_' + ch_code + '_week.html'
 
-    schedule = Schedule(tz, _SOURCE_TZ)
+    schedule = Schedule(tz, _source_tz)
     summaries = {}
 
     for div in islice(_fetch(path), 6, None):
