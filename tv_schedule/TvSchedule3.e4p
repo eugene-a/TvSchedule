@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project TvSchedule3 -->
-<!-- Saved: 2015-01-15, 17:34:41 -->
+<!-- Saved: 2015-01-18, 18:51:41 -->
 <!-- Copyright (C) 2015 Eugene Alterman, eugalt@gmail.com -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -21,10 +21,10 @@
     <Source>source/viasat.py</Source>
     <Source>source/vsetv.py</Source>
     <Source>source/akado.py</Source>
-    <Source>cp1251m.py</Source>
     <Source>source/channel9.py</Source>
     <Source>env.py</Source>
     <Source>dateutil.py</Source>
+    <Source>cp1251ext.py</Source>
   </Sources>
   <Forms/>
   <Translations/>

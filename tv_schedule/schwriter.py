@@ -2,16 +2,13 @@ import re
 import socket
 import heapq
 from os import makedirs
-from os.path import join
-from importlib import import_module
-from json import load
 from http.client import HTTPException
 from datetime import date, timedelta
-from contextlib import closing
+from contextlib import ExitStack
 
 from tzlocal import get_localzone
 
-from config import Config
+import config
 from dateutil import genitive_month
 
 
@@ -83,37 +80,10 @@ def _prepare_summary(s):
     return re.sub(_DATE_PATTERN, r'\1-\2', s)  # dash between day and month
 
 
-# open a file with UTF-8-encoded text content for reading
-def _open_r(name):
-    return open(name, encoding='utf-8',)
-
-
-# open a file for writing text data  using CP1251 encoding
-def _open_w(name, encoding='cp1251', errors=None):
-    return open(name, 'w', encoding=encoding, errors=errors)
-
-
-# import module, load and set channel code dictionary in it if required,
-# return 'get_schedule' method
-def _get_source(source, dir):
-    if isinstance(source, list):
-        return [_get_source(s, dir) for s in source]
-    else:
-        module = import_module('source.' + source)
-        if(module.LOAD_CHANNEL_CODE):
-            with _open_r(join(dir, source + '.json')) as fp:
-                module.channel_code = load(fp)
-        return module.get_schedule
-
-
 class _ScheduleWriter:
-    def __init__(self, config):
-        self._f_prog = _open_w(config.schedule(), 'cp1251m', 'replace')
-        self._f_sum = _open_w(config.summaries(), 'cp1251m', 'replace')
-
-        input_dir = config.input_dir()
-        default_source = config.default_source()
-        self._default_source = _get_source(default_source, input_dir)
+    def __init__(self, f_prog, f_sum):
+        self._f_prog = f_prog
+        self._f_sum = f_sum
 
         schedule_header = 'tv.all\n'
         self._f_prog.write(schedule_header)
@@ -123,10 +93,11 @@ class _ScheduleWriter:
 
         self._source = {}
 
-        sources = config.sources()
-        for s in sources:
-            source = _get_source(s[0], input_dir)
-            self._source.update((ch, [source, ]) for ch in s[1])
+        sources = config.get_sources()
+        self._default_source = sources.default
+
+        for s in sources.special:
+            self._source.update((ch, [s[0], ]) for ch in s[1])
 
     #  return the channel program from the first source found to have one
     def _find_schedule(self, channel, sources):
@@ -167,28 +138,42 @@ class _ScheduleWriter:
                 self._f_sum.write(_prepare_summary(summary) + '\n')
         return last_date is not None
 
-    def close(self):
-        self._f_prog.close()
-        self._f_sum.close()
+
+# open a file with UTF-8-encoded text content for reading
+def _open_r(name):
+    return open(name, encoding='utf-8',)
 
 
-def write_schedule(config_file):
-    config = Config(config_file)
+# open a file for writing text data  using CP1251 encoding
+def _open_w(name):
+    return open(name, 'w', encoding= 'cp1251', errors=None)
+
+
+# same as _open_w
+# but accepting and replacing characters outside of CP1251 character set
+def _open_w_ext(name):
+    return open(name, 'w', encoding='cp1251ext', errors='replace')
+
+
+def write_schedule():
     makedirs(config.output_dir(), exist_ok=True)
 
-    miss = config.missing()
-    chan = config.channels()
-
-    with closing(_ScheduleWriter(config)) as writer:
-        with _open_w(miss) as f_missing, _open_r(chan) as f_channels:
-            for line in f_channels:
-                line = line.rstrip()
-                print(line)
-                try:
-                    result = writer.write(line[line.find('.') + 2:])
-                except socket.error:
-                    result = False
-                except HTTPException:
-                    result = False
-                if not result:
-                    f_missing.write(line + '\n')
+    with ExitStack() as stack:
+        f_channels = stack.enter_context( _open_r(config.channels()))
+        f_prog = stack.enter_context(_open_w_ext(config.schedule()))
+        f_sum = stack.enter_context(_open_w_ext(config.summaries()))
+        f_missing = stack.enter_context(_open_w(config.missing()))
+ 
+        writer = _ScheduleWriter(f_prog,  f_sum)
+     
+        for line in f_channels:
+            line = line.rstrip()
+            print(line)
+            try:
+                result = writer.write(line[line.find('.') + 2:])
+            except socket.error:
+                result = False
+            except HTTPException:
+                result = False
+            if not result:
+                f_missing.write(line + '\n')

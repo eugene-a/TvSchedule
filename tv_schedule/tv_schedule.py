@@ -1,7 +1,7 @@
 from locale import setlocale, LC_CTYPE, LC_TIME
 from encodings import cp866
 
-import cp1251m
+import cp1251ext
 from env import windows, locale_ru
 from schwriter import write_schedule
 
@@ -24,9 +24,9 @@ def init():
 init()
 del init
 
-cp1251m.register()
+cp1251ext.register()
 
 # print ukrainian 'i' to console as latin 'i'
 cp866.encoding_map[ord('і')] = cp866.encoding_map[ord('i')]
 
-write_schedule('tv_schedule.ini')
+write_schedule()
