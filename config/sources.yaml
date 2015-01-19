@@ -1,7 +1,7 @@
 default:
-  [vsetv, akado]
+  [!src vsetv, !src akado]
 special:
-  - [channel9, [9 Канал Израиль]] 
-  - [viasat, [VH1, Disney XD, BBC World News, TV1000 Premium]]
+  - [!src channel9, [9 Канал Израиль]] 
+  - [!src viasat, [VH1, Disney XD, BBC World News, TV1000 Premium]]
 
 

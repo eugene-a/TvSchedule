@@ -1,7 +1,7 @@
 from configparser import ConfigParser
 from importlib import import_module
 from os.path import join
-from yaml import load
+from yaml import load, add_constructor
 
 
 def _open(name, mode='r'):
@@ -71,38 +71,6 @@ _missing = _config.missing()
 del _config
 
 
-class _SourceBuilder:
-    def __init__(self, dir):
-        self.dir = dir
-
-    # import module, load and set channel code dictionary in it if required,
-    # return 'get_schedule' method
-    def _get_source(self, source):
-        if isinstance(source, list):
-            return [self._get_source(s) for s in source]
-        else:
-            module = import_module('source.' + source)
-            if(module.need_channel_code()):
-                with _open(join(self.dir, source + '.yaml')) as fp:
-                    module.channel_code = load(fp)
-            return module.get_schedule
-
-    def build_sources(self):
-        with _open(join(self.dir, 'sources.yaml')) as fp:
-            dct = load(fp)
-
-        class Sources:
-            pass
-
-        sources = Sources()
-        sources.default = self._get_source(dct["default"])
-        sources.special = dct["special"]
-        for s in sources.special:
-            s[0] = self._get_source(s[0])
-
-        return sources
-
-
 def input_dir():
     return _input_dir
 
@@ -127,5 +95,26 @@ def missing():
     return _missing
 
 
+# YAML !src node handling
+# import source module, load and set channel code dictionary if required,
+# return 'get_schedule' method of the imported module
+def _get_source(loader, node):
+    source = loader.construct_scalar(node)
+    module = import_module('source.' + source)
+    if(module.need_channel_code()):
+        with _open(join(_input_dir, source + '.yaml')) as fp:
+            module.channel_code = load(fp)
+    return module.get_schedule
+
+add_constructor('!src', _get_source)
+
+
 def get_sources():
-    return _SourceBuilder(_input_dir).build_sources()
+
+    class Sources:
+        def __init__(self, dct):
+            self.default = dct['default']
+            self.special = dct['special']
+
+    with _open(join(_input_dir, 'sources.yaml')) as fp:
+        return Sources(load(fp))
