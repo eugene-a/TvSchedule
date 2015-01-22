@@ -19,7 +19,7 @@ setup(name='tv_schedule',
               'tv_schedule=tv_schedule.schwriter:write_schedule'
           ]
       },
-      package_data={'tv_schedule': ['tv_schedule.yaml', 'channels.txt'],
+      package_data={'tv_schedule': ['channels.txt'],
                     'tv_schedule.source': ['sources/*.*']
                     }
       )
