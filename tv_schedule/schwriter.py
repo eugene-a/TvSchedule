@@ -2,14 +2,16 @@ import re
 import socket
 import heapq
 from os import makedirs
+from os.path import join
 from http.client import HTTPException
 from datetime import date, timedelta
 from contextlib import ExitStack
 
 from tzlocal import get_localzone
 
-import config
-from dateutil import genitive_month
+import tv_schedule.config as config
+from tv_schedule.source_import import import_sources
+from tv_schedule.dateutil import genitive_month
 
 
 def _info_value(show):
@@ -92,7 +94,7 @@ class _ScheduleWriter:
 
         self._source = {}
 
-        sources = config.get_sources()
+        sources = import_sources()
         self._default_source = sources.default
 
         for s in sources.special:
@@ -155,17 +157,21 @@ def _open_w_ext(name):
 
 
 def write_schedule():
-    makedirs(config.output_dir(), exist_ok=True)
+    output = config.output_dir()
+    makedirs(output, exist_ok=True)
+
+    schedule = join(output, 'schedule.txt')
+    summaries = join(output, 'summaries.txt')
+    missing = join(output, 'missing.txt')
 
     with ExitStack() as stack:
-        f_channels = stack.enter_context(_open_r(config.channels()))
-        f_prog = stack.enter_context(_open_w_ext(config.schedule()))
-        f_sum = stack.enter_context(_open_w_ext(config.summaries()))
-        f_missing = stack.enter_context(_open_w(config.missing()))
- 
-        writer = _ScheduleWriter(f_prog,  f_sum)
-     
-        for line in f_channels:
+        f_prog = stack.enter_context(_open_w_ext(schedule))
+        f_sum = stack.enter_context(_open_w_ext(summaries))
+        f_missing = stack.enter_context(_open_w(missing))
+
+        writer = _ScheduleWriter(f_prog, f_sum)
+
+        for line in config.channels():
             line = line.rstrip()
             print(line)
             try:

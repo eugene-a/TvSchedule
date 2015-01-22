@@ -1,119 +1,93 @@
-from configparser import ConfigParser
-from importlib import import_module
-from os.path import join
-from yaml import load, add_constructor
+from os.path import join, expanduser
+from yaml import load
+from pkg_resources import resource_stream
+from codecs import getreader
+from functools import partial
+
+_UTF_8 = 'utf-8'
+_YAML_EXT = '.yaml'
+_CFG = 'tv_schedule' + _YAML_EXT
+_OPTION_CHANNELS = 'channels'
+_OPTION_SOURCES = 'source'
+_OPTION_OUTPUT = 'output'
+_DEFAULT_CHANNELS = 'channels.txt'
+_SOURCE_DIR = _OPTION_SOURCES
+_SOURCE_PACKAGE = 'source'
+_SOURCE_DIR = 'sources'
+_DEFAULT_OUTPUT_DIR = _OPTION_OUTPUT
+
+_home = expanduser('~')
+_data_path = join(_home, 'TvSchedule')
 
 
-def _open(name, mode='r'):
-    return open(name, mode, encoding='utf-8')
+def _open_data_file(name):
+    return open(join(_home, name), 'rb')
 
 
+def _open_source(name):
+    name = join(_SOURCE_DIR, name)
+    return resource_stream(source_package(), name)
+
+
+# an optional congfiguration file may specify alternative
+# directories  for input and/or output data
 class _Config:
     def __init__(self, config_file):
+        self.open_channels = partial(resource_stream, __name__)
+        self._open_source = _open_source
 
-        config = ConfigParser()
-        config.read_file(open(config_file, encoding='utf-8'))
+        self._channels = _DEFAULT_CHANNELS
+        self._sources = join(_SOURCE_PACKAGE, _SOURCE_DIR)
+        self._output = join(_data_path, _DEFAULT_OUTPUT_DIR)
 
-        modified = False
+        try:
+            with open(config_file, 'r', encoding=_UTF_8) as f:
+                conf = load(f)
 
-        if not config.has_section('Input'):
-            config.add_section('Input')
-            config.set('Input', 'dir', join('..', 'input'))
-            config.set('Input', 'channels',
-                       join('%(dir)s', 'channels.txt'))
-            modified = True
+                try:
+                    self._channels = conf[_OPTION_CHANNELS]
+                    self.open_channels = _open_data_file
+                except KeyError:
+                    pass
 
-        if not config.has_section('Output'):
-            config.add_section('Output')
-            config.set('Output', 'dir', join('..', 'output'))
-            config.set('Output', 'schedule',
-                       join('%(dir)s', 'schedule.txt'))
-            config.set('Output', 'summaries',
-                       join('%(dir)s', 'summaries.txt'))
-            config.set('Output', 'missing',
-                       join('%(dir)s', 'missing.txt'))
-            modified = True
+                try:
+                    self._sources = conf[_OPTION_SOURCES]
+                    self._open_source = _open_data_file
+                except KeyError:
+                    pass
 
-        if modified:
-            with _open(config_file, 'w') as cfile:
-                config.write(cfile)
+                try:
+                    self._output = join(_home, conf[_OPTION_OUTPUT])
+                except KeyError:
+                    pass
 
-        self.config = config
+        except FileNotFoundError:
+            pass
 
-    def input_dir(self):
-        return self.config.get('Input', 'dir')
+        self .open_channels = partial(self.open_channels, self._channels)
 
-    def channels(self):
-        return self.config.get('Input', 'channels')
+    def source_dir(self):
+        return self._sources
 
     def output_dir(self):
-        return self.config.get('Output', 'dir')
+        return self._output
 
-    def schedule(self):
-        return self.config.get('Output', 'schedule')
-
-    def summaries(self):
-        return self.config.get('Output', 'summaries')
-
-    def missing(self):
-        return self.config.get('Output', 'missing')
+_config = _Config(join(_data_path, _CFG))
 
 
-_config = _Config('tv_schedule.conf')
-
-_input_dir = _config.input_dir()
-_channels = _config.channels()
-_output_dir = _config.output_dir()
-_schedule = _config.schedule()
-_summaries = _config.summaries()
-_missing = _config.missing()
-
-del _config
+def source_package():
+    package_dot = __name__[: __name__.rindex('.') + 1]
+    return package_dot + _SOURCE_PACKAGE
 
 
-def input_dir():
-    return _input_dir
-
-
-def channels():
-    return _channels
+def open_source(name):
+    return _config._open_source(name + _YAML_EXT)
 
 
 def output_dir():
-    return _output_dir
+    return _config.output_dir()
 
 
-def schedule():
-    return _schedule
-
-
-def summaries():
-    return _summaries
-
-
-def missing():
-    return _missing
-
-
-# YAML !src node handling
-# import source module, load and set channel code dictionary if required,
-# return 'get_schedule' method of the imported module
-def _get_source(loader, node):
-    source = loader.construct_scalar(node)
-    module = import_module('source.' + source)
-    if(module.need_channel_code()):
-        with _open(join(_input_dir, source + '.yaml')) as fp:
-            module.channel_code = load(fp)
-    return module.get_schedule
-
-add_constructor('!src', _get_source)
-
-
-def get_sources():
-    class Sources:
-        def __init__(self, dct):
-            self.default = dct['default']
-            self.special = dct['special']
-
-    with _open(join(_input_dir, 'sources.yaml')) as fp:
-        return Sources(load(fp))
+def channels():
+    with _config.open_channels() as f:
+        return getreader(_UTF_8)(f).readlines()

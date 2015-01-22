@@ -1,6 +1,8 @@
 from httplib2 import Http
 from lxml.etree import HTMLParser, fromstring
 from encodings import cp866
+from os.path import join
+from tv_schedule.config import output_dir
 
 http = Http()
 parser = HTMLParser()
@@ -8,7 +10,7 @@ parser = HTMLParser()
 # print ukrainian 'i' to console as latin 'i'
 cp866.encoding_map[ord('і')] = cp866.encoding_map[ord('i')]
 
-with open('../output/vsetv.txt', 'w') as f:
+with open(join(output_dir(), 'vsetv.txt'), 'w') as f:
     hdrs = {
         'user-agent':
             'Mozilla/5.0 (Windows NT 6.1; rv:9.0) Gecko/20100101 Firefox/9.0'

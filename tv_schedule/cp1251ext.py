@@ -25,7 +25,8 @@ class StreamWriter(charmap.StreamWriter):
 
 
 def register():
-    name = __name__
+    name = __name__[__name__.rindex('.') + 1:]
+
     codec_info = codecs.CodecInfo(
         charmap.Codec.encode, cp1251.Codec.decode,
         cp1251.StreamReader, StreamWriter,

@@ -4,8 +4,8 @@ from lxml.etree import fromstring, HTMLParser
 from httplib2 import Http
 from pytz import timezone
 
-from schedule import Schedule
-from dateutil import parse_date
+from tv_schedule.schedule import Schedule
+from tv_schedule.dateutil import parse_date
 
 
 def need_channel_code():

@@ -1,5 +1,5 @@
-from datetime import date, datetime,  timedelta
-from env import windows
+from datetime import date, datetime, timedelta
+from tv_schedule.env import windows
 
 
 def genitive_month(s):

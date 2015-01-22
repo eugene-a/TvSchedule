@@ -3,8 +3,8 @@ from itertools import islice
 from lxml.etree import parse, HTMLParser
 from pytz import timezone
 
-from dateutil import last_weekday
-from schedule import Schedule
+from tv_schedule.schedule import Schedule
+from tv_schedule.dateutil import last_weekday
 
 
 def need_channel_code():
