@@ -1,4 +1,4 @@
-from tv_schedule.schwriter import write_schedule
+from tv_schedule import schwriter
 
 
-write_schedule()
+schwriter.write_schedule()

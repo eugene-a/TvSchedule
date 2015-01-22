@@ -1,11 +1,10 @@
-from itertools import islice
+import itertools
 
-from lxml.etree import fromstring, HTMLParser
-from httplib2 import Http
-from pytz import timezone
+import lxml.etree
+import httplib2
+import pytz
 
-from tv_schedule.schedule import Schedule
-from tv_schedule.dateutil import parse_date
+from tv_schedule import dateutil, schedule
 
 
 def need_channel_code():
@@ -13,7 +12,7 @@ def need_channel_code():
 
 channel_code = None
 
-_source_tz = timezone('Europe/Kiev')
+_source_tz = pytz.timezone('Europe/Kiev')
 _headers = {
     'user-agent':
     'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:22.0) Gecko/20100101 Firefox/22.0'
@@ -21,13 +20,13 @@ _headers = {
 
 _URL = 'http://www.vsetv.com/'
 
-_http = Http()
-_parser = HTMLParser()
+_http = httplib2.Http()
+_parser = lxml.etree.HTMLParser()
 
 
 def _fetch(path):
     content = _http.request(_URL + path, headers=_headers)[1]
-    doc = fromstring(content, _parser)
+    doc = lxml.etree.fromstring(content, _parser)
     return doc[3][6][3][0]  # main    (4 comments between top and base tables)
 
 
@@ -75,27 +74,27 @@ def get_schedule(channel, tz):
 
     path = 'schedule_channel_' + ch_code + '_week.html'
 
-    schedule = Schedule(tz, _source_tz)
+    sched = schedule.Schedule(tz, _source_tz)
     summaries = {}
 
-    for div in islice(_fetch(path), 6, None):
+    for div in itertools.islice(_fetch(path), 6, None):
         if div.get('class') == 'sometitle':
-            date = parse_date(div[0][0][0].text, '%A, %d %B')
-            schedule.set_date(date)
+            date = dateutil.parse_date(div[0][0][0].text, '%A, %d %B')
+            sched.set_date(date)
         else:
             for subd in div:
                 subd_class = subd.get('class')
                 if subd_class == 'time':
-                    schedule.set_time(subd.text)
+                    sched.set_time(subd.text)
                 elif subd_class == 'prname2':
                     a = subd.find('a')
                     if a is None:
                         title = (
                             subd.text if len(subd) == 0 else subd[0].tail[1:]
                         )
-                        schedule.set_title(title)
+                        sched.set_title(title)
                     else:
-                        schedule.set_title(a.text)
+                        sched.set_title(a.text)
                         path = a.get('href')
                         key = path[: path.find('.')]
                         summary = summaries.get(key)
@@ -103,5 +102,5 @@ def get_schedule(channel, tz):
                             summary = _get_summary(path)
                             summaries[key] = summary
                         if summary:
-                            schedule.set_summary(summary)
-    return schedule.pop()
+                            sched.set_summary(summary)
+    return sched.pop()

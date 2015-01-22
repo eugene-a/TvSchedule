@@ -1,7 +1,7 @@
-from importlib import import_module
-from yaml import load, add_constructor
+import importlib
+import yaml
 
-from tv_schedule.config import source_package,  open_source
+from tv_schedule import config
 
 _CFG = 'sources'
 _OPTION_DEFAULT = 'default'
@@ -14,13 +14,13 @@ _YAML_SRC_TAG = '!src'
 # return 'get_schedule' method of the imported module
 def _import_source(loader, node):
     source = loader.construct_scalar(node)
-    module = import_module(source_package() + '.' + source)
+    module = importlib.import_module(config.source_package() + '.' + source)
     if(module.need_channel_code()):
-        with open_source(source) as f:
-            module.channel_code = load(f)
+        with config.open_source(source) as f:
+            module.channel_code = yaml.load(f)
     return module.get_schedule
 
-add_constructor(_YAML_SRC_TAG, _import_source)
+yaml.add_constructor(_YAML_SRC_TAG, _import_source)
 
 
 def import_sources():
@@ -29,5 +29,5 @@ def import_sources():
             self.default = dct[_OPTION_DEFAULT]
             self.special = dct[_OPTION_SPECIAL]
 
-    with open_source(_CFG) as f:
-        return Sources(load(f))
+    with config.open_source(_CFG) as f:
+        return Sources(yaml.load(f))

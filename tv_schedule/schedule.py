@@ -1,4 +1,4 @@
-from datetime import datetime, time, timedelta
+import datetime
 
 
 class Show:
@@ -22,7 +22,7 @@ class Show:
     def __str__(self):
         return self.datetime.strftime('%H:%M ') + self.title
 
-_daydelta = timedelta(1)
+_daydelta = datetime.timedelta(1)
 
 
 class Schedule:
@@ -41,7 +41,8 @@ class Schedule:
         if hour < self._source_hour:
             self._source_date += _daydelta
         self._source_hour = hour
-        dt = datetime.combine(self._source_date, time(hour, minute))
+        time = datetime.time(hour, minute)
+        dt = datetime.datetime.combine(self._source_date, time)
         # convert to local time zone
         dt = self._source_tz.localize(dt).astimezone(self._local_tz)
         self._shows.append(Show(dt))

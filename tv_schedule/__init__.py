@@ -1,13 +1,11 @@
-from locale import setlocale, LC_CTYPE, LC_TIME
+import locale
 from encodings import cp866
-
-import tv_schedule.cp1251ext as cp1251ext
-from tv_schedule.env import windows, locale_ru
+from tv_schedule import cp1251ext, env
 
 
 # dont let the system fall asleep!
 def no_idle():
-    if windows():
+    if env.windows():
         from ctypes import windll
         es_system_required = 0x00000001
         es_continuous = 0x80000000
@@ -16,9 +14,9 @@ def no_idle():
 
 
 def init():
-    locale = locale_ru()
-    setlocale(LC_CTYPE, locale)
-    setlocale(LC_TIME, locale)
+    loc = env.locale_ru()
+    locale.setlocale(locale.LC_CTYPE, loc)
+    locale.setlocale(locale.LC_TIME, loc)
     no_idle()
 
 init()

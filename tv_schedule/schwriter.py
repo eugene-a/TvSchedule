@@ -1,17 +1,15 @@
 import re
 import socket
 import heapq
-from os import makedirs
-from os.path import join
-from http.client import HTTPException
-from datetime import date, timedelta
-from contextlib import ExitStack
+import os
+import os.path
+import http.client
+import datetime
+import contextlib
 
-from tzlocal import get_localzone
+import tzlocal
 
-import tv_schedule.config as config
-from tv_schedule.source_import import import_sources
-from tv_schedule.dateutil import genitive_month
+from tv_schedule import config, source_import, dateutil
 
 
 def _info_value(show):
@@ -26,7 +24,7 @@ def _uniform(s):
     s = s.replace('эпизод', '')
     return s.replace('эп', '')
 
-_treshold = timedelta(minutes=20)
+_treshold = datetime.timedelta(minutes=20)
 
 
 # combine info from multiple sources
@@ -62,8 +60,8 @@ def _merge(shows):
 # This can be avoided by replacing spaces separating day and month
 # with something else
 def _create_date_pattern():
-    d = date(1900, 1, 1)
-    gm = genitive_month
+    d = datetime.date(1900, 1, 1)
+    gm = dateutil.genitive_month
     pattern = r'(\d{1,2}) +(' + '|'.join(
         (gm(d.replace(month=m).strftime('%B')) for m in range(1, 13))
     ) + ')'
@@ -90,11 +88,11 @@ class _ScheduleWriter:
         self._f_prog.write(schedule_header)
         self._f_sum.write(schedule_header)
 
-        self._tz = get_localzone()
+        self._tz = tzlocal.get_localzone()
 
         self._source = {}
 
-        sources = import_sources()
+        sources = source_import.import_sources()
         self._default_source = sources.default
 
         for s in sources.special:
@@ -121,7 +119,7 @@ class _ScheduleWriter:
             date = show.datetime.date()
             if date != last_date:
                 s = date.strftime('%A, %d %B').title()
-                s = '\n' + genitive_month(s) + '. '
+                s = '\n' + dateutil.genitive_month(s) + '. '
                 show_date = s + channel + '\n'
                 summary_date = s + '(Анонс)' + channel + '\n'
                 self._f_prog.write(show_date)
@@ -158,13 +156,13 @@ def _open_w_ext(name):
 
 def write_schedule():
     output = config.output_dir()
-    makedirs(output, exist_ok=True)
+    os.makedirs(output, exist_ok=True)
 
-    schedule = join(output, 'schedule.txt')
-    summaries = join(output, 'summaries.txt')
-    missing = join(output, 'missing.txt')
+    schedule = os.path.join(output, 'schedule.txt')
+    summaries = os.path.join(output, 'summaries.txt')
+    missing = os.path.join(output, 'missing.txt')
 
-    with ExitStack() as stack:
+    with contextlib.ExitStack() as stack:
         f_prog = stack.enter_context(_open_w_ext(schedule))
         f_sum = stack.enter_context(_open_w_ext(summaries))
         f_missing = stack.enter_context(_open_w(missing))
@@ -178,7 +176,7 @@ def write_schedule():
                 result = writer.write(line[line.find('.') + 2:])
             except socket.error:
                 result = False
-            except HTTPException:
+            except http.client.HTTPException:
                 result = False
             if not result:
                 f_missing.write(line + '\n')

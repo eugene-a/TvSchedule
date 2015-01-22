@@ -1,17 +1,17 @@
-from platform import system
+import platform
 
 
 def _get_env():
-    platform = system()
+    system = platform.system()
 
-    if platform == 'Windows':
+    if system == 'Windows':
         def windows():
             return True
 
         def locale_ru():
             return 'Russian_Russia.1251'
 
-    elif platform == 'Linux':
+    elif system == 'Linux':
         def windows():
             return False
 
@@ -19,7 +19,7 @@ def _get_env():
             return 'ru_RU.CP1251'
 
     else:
-        raise Exception(platform + ': unsupported platform')
+        raise Exception(system + ': unsupported platform')
 
     return (windows, locale_ru)
 

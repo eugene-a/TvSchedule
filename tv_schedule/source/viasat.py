@@ -1,9 +1,8 @@
-from httplib2 import Http
-from lxml.etree import HTMLParser, fromstring
-from pytz import timezone
+import httplib2
+import lxml.etree
+import pytz
 
-from tv_schedule.schedule import Schedule
-from tv_schedule.dateutil import fromwin, parse_date
+from tv_schedule import dateutil, schedule
 
 
 def need_channel_code():
@@ -13,8 +12,8 @@ channel_code = None
 
 
 class _Target:
-    def set_schedule(self, schedule):
-        self._schedule = schedule
+    def set_schedule(self, sched):
+        self._schedule = sched
 
     def start(self, tag, attrib):
         if tag == 'div':
@@ -27,7 +26,8 @@ class _Target:
     def end(self, tag):
         if tag == 'div':
             if self._div_class == 'day_front':
-                date = parse_date(fromwin(self._data_str), '%a, %d. %b')
+                date_str = dateutil.fromwin(self._data_str)
+                date = dateutil.parse_date(date_str, '%a, %d. %b')
                 self._schedule.set_date(date)
             elif self._div_class == 'progtime':
                 self._schedule.set_time(self._data_str)
@@ -48,10 +48,10 @@ class _Target:
         pass
 
 
-_source_tz = timezone('Europe/Riga')
+_source_tz = pytz.timezone('Europe/Riga')
 
-_http = Http()
-_parser = HTMLParser(target=_Target())
+_http = httplib2.Http()
+_parser = lxml.etree.HTMLParser(target=_Target())
 
 
 def get_schedule(channel, tz):
@@ -59,11 +59,11 @@ def get_schedule(channel, tz):
     if ch_code is None:
         return []
 
-    schedule = Schedule(tz, _source_tz)
-    _parser.target.set_schedule(schedule)
+    sched = schedule.Schedule(tz, _source_tz)
+    _parser.target.set_schedule(sched)
 
     url = 'http://www.viasat.lv/viasat0/tv-programma27/'       \
         'tv-programma28/_/all/0/' + ch_code + '/?viewweek=1'
 
-    fromstring(_http.request(url)[1], _parser)
-    return schedule.pop()
+    lxml.etree.fromstring(_http.request(url)[1], _parser)
+    return sched.pop()

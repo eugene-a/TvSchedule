@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
-<!-- eric project file for project TvSschedule3 -->
-<!-- Saved: 2015-01-22, 11:14:35 -->
+<!-- eric project file for project TvSchedule -->
+<!-- Saved: 2015-01-22, 15:43:57 -->
 <!-- Copyright (C) 2015 Eugene Alterman, eugalt@gmail.com -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -12,6 +12,7 @@
   <Version>0.1</Version>
   <Author>Eugene Alterman</Author>
   <Email>eugalt@gmail.com</Email>
+  <Eol index="-1"/>
   <Sources>
     <Source>tv_schedule/config.py</Source>
     <Source>tv_schedule/cp1251ext.py</Source>
@@ -37,9 +38,7 @@
   <Translations/>
   <Resources/>
   <Interfaces/>
-  <Others>
-    <Other>config</Other>
-  </Others>
+  <Others/>
   <MainScript>tv_schedule.py</MainScript>
   <Vcs>
     <VcsType>None</VcsType>

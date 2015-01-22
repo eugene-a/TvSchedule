@@ -1,5 +1,5 @@
-from datetime import date, datetime, timedelta
-from tv_schedule.env import windows
+import datetime
+from tv_schedule import env
 
 
 def genitive_month(s):
@@ -18,7 +18,7 @@ def _win2linux_month(month):
 
 # s starts with an abbreviated weekday (2 chars)
 # and ends with an abbreviated month (3 chars)
-if windows():
+if env.windows():
     def fromwin(s):
         return s
 else:
@@ -38,7 +38,7 @@ def _nominative_month(s):
 def _get_month_and_year(d):
     return (d.month, ' ' + str(d.year))
 
-_month, _year = _get_month_and_year(date.today())
+_month, _year = _get_month_and_year(datetime.date.today())
 
 del _get_month_and_year
 
@@ -59,7 +59,7 @@ def parse_date(s, format):
     if format[-1] == 'B':
         s = _nominative_month(s)
     #  initially assume the current year
-    dt = datetime.strptime(s + _year, format + ' %Y')
+    dt = datetime.datetime.strptime(s + _year, format + ' %Y')
     return _fixyear(dt.date())
 
 
@@ -68,4 +68,4 @@ def last_weekday(d,  weekday):
     delta = d.weekday() - weekday
     if delta < 0:
         delta += 7
-    return d - timedelta(delta)
+    return d - datetime.timedelta(delta)

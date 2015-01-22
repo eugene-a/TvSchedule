@@ -1,8 +1,8 @@
-from os.path import join, expanduser
-from yaml import load
-from pkg_resources import resource_stream
-from codecs import getreader
-from functools import partial
+import os.path
+import yaml
+import pkg_resources
+import codecs
+import functools
 
 _UTF_8 = 'utf-8'
 _YAML_EXT = '.yaml'
@@ -16,33 +16,35 @@ _SOURCE_PACKAGE = 'source'
 _SOURCE_DIR = 'sources'
 _DEFAULT_OUTPUT_DIR = _OPTION_OUTPUT
 
-_home = expanduser('~')
-_data_path = join(_home, 'TvSchedule')
+_home = os.path.expanduser('~')
+_data_path = os.path.join(_home, 'TvSchedule')
 
 
 def _open_data_file(name):
-    return open(join(_home, name), 'rb')
+    return open(os.path.join(_home, name), 'rb')
 
 
 def _open_source(name):
-    name = join(_SOURCE_DIR, name)
-    return resource_stream(source_package(), name)
+    name = os.path.join(_SOURCE_DIR, name)
+    return pkg_resources.resource_stream(source_package(), name)
 
 
 # an optional congfiguration file may specify alternative
 # directories  for input and/or output data
 class _Config:
     def __init__(self, config_file):
-        self.open_channels = partial(resource_stream, __name__)
+        partial = functools.partial
+
+        self.open_channels = partial(pkg_resources.resource_stream, __name__)
         self._open_source = _open_source
 
         self._channels = _DEFAULT_CHANNELS
-        self._sources = join(_SOURCE_PACKAGE, _SOURCE_DIR)
-        self._output = join(_data_path, _DEFAULT_OUTPUT_DIR)
+        self._sources = os.path.join(_SOURCE_PACKAGE, _SOURCE_DIR)
+        self._output = os.path.join(_data_path, _DEFAULT_OUTPUT_DIR)
 
         try:
             with open(config_file, 'r', encoding=_UTF_8) as f:
-                conf = load(f)
+                conf = yaml.load(f)
 
                 try:
                     self._channels = conf[_OPTION_CHANNELS]
@@ -57,7 +59,7 @@ class _Config:
                     pass
 
                 try:
-                    self._output = join(_home, conf[_OPTION_OUTPUT])
+                    self._output = os.path.join(_home, conf[_OPTION_OUTPUT])
                 except KeyError:
                     pass
 
@@ -72,7 +74,7 @@ class _Config:
     def output_dir(self):
         return self._output
 
-_config = _Config(join(_data_path, _CFG))
+_config = _Config(os.path.join(_data_path, _CFG))
 
 
 def source_package():
@@ -90,4 +92,4 @@ def output_dir():
 
 def channels():
     with _config.open_channels() as f:
-        return getreader(_UTF_8)(f).readlines()
+        return codecs.getreader(_UTF_8)(f).readlines()

@@ -1,16 +1,16 @@
-from httplib2 import Http
-from lxml.etree import HTMLParser, fromstring
+import httplib2
+import lxml.etree
+import os.path
 from encodings import cp866
-from os.path import join
-from tv_schedule.config import output_dir
+from tv_schedule import config
 
-http = Http()
-parser = HTMLParser()
+http = httplib2.Http()
+parser = lxml.etree.HTMLParser()
 
 # print ukrainian 'i' to console as latin 'i'
 cp866.encoding_map[ord('і')] = cp866.encoding_map[ord('i')]
 
-with open(join(output_dir(), 'vsetv.txt'), 'w') as f:
+with open(os.path.join(config.output_dir(), 'vsetv.txt'), 'w') as f:
     hdrs = {
         'user-agent':
             'Mozilla/5.0 (Windows NT 6.1; rv:9.0) Gecko/20100101 Firefox/9.0'
@@ -18,7 +18,7 @@ with open(join(output_dir(), 'vsetv.txt'), 'w') as f:
     for i in range(1, 1016):
         url = 'http://www.vsetv.com/schedule_channel_{0}_week.html'.format(i)
         content = http.request(url, headers=hdrs)[1]
-        doc = fromstring(content, parser)
+        doc = lxml.etree.fromstring(content, parser)
         table = doc[3][6]           # <!-- Base Table (1 колонка / 8 строк) -->
         chlogo = table[3][0][2]
         if chlogo.tag == 'div':
