@@ -1,5 +1,5 @@
 default:
-  [!src vsetv, !src akado]
+  [!src vsetv, [!src yandex, !src akado]]
 special:
   - [!src channel9, [9 Канал Израиль]] 
   - [!src viasat, [VH1, Disney XD, BBC World News, TV1000 Premium]]

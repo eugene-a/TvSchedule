@@ -1,5 +1,5 @@
 import itertools
-
+import datetime
 import lxml.etree
 import httplib2
 import pytz
@@ -66,6 +66,9 @@ def _get_summary(path):
 
     return summary
 
+# don't load summaries for past shows
+_elapsed_limit = datetime.timedelta(hours=1)
+
 
 def get_schedule(channel, tz):
     ch_code = channel_code.get(channel)
@@ -85,7 +88,8 @@ def get_schedule(channel, tz):
             for subd in div:
                 subd_class = subd.get('class')
                 if subd_class == 'time':
-                    sched.set_time(subd.text)
+                    now = datetime.datetime.now(tz)
+                    elapsed = now - sched.set_time(subd.text)
                 elif subd_class == 'prname2':
                     a = subd.find('a')
                     if a is None:
@@ -95,12 +99,13 @@ def get_schedule(channel, tz):
                         sched.set_title(title)
                     else:
                         sched.set_title(a.text)
-                        path = a.get('href')
-                        key = path[: path.find('.')]
-                        summary = summaries.get(key)
-                        if summary is None:
-                            summary = _get_summary(path)
-                            summaries[key] = summary
-                        if summary:
-                            sched.set_summary(summary)
+                        if(elapsed < _elapsed_limit):
+                            path = a.get('href')
+                            key = path[: path.find('.')]
+                            summary = summaries.get(key)
+                            if summary is None:
+                                summary = _get_summary(path)
+                                summaries[key] = summary
+                            if summary:
+                                sched.set_summary(summary)
     return sched.pop()

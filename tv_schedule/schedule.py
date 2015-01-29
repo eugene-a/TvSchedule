@@ -43,9 +43,10 @@ class Schedule:
         self._source_hour = hour
         time = datetime.time(hour, minute)
         dt = datetime.datetime.combine(self._source_date, time)
-        # convert to local time zone
+        # convert to local time if necessary
         dt = self._source_tz.localize(dt).astimezone(self._local_tz)
         self._shows.append(Show(dt))
+        return dt
 
     def set_title(self, title):
         if title is None:

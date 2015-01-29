@@ -3,7 +3,7 @@ import itertools
 import lxml.etree
 import pytz
 
-from tv_schedule import dateutil, schedule
+from tv_schedule import schedule
 
 
 def need_channel_code():
@@ -24,8 +24,11 @@ def get_schedule(channel, tz):
     url = 'http://9tv.co.il/tv-shows/'
     parser = lxml.etree.HTMLParser()
 
-    # start from Sunday
-    d = dateutil.last_weekday(datetime.datetime.now(source_tz).date(), 6)
+    today = datetime.datetime.now(source_tz).date()
+    weekday = today.weekday()
+    
+    #start ing from Sunday
+    d = today - datetime.timedelta(weekday + 1) if weekday < 6 else today
 
     for tv_program in itertools.islice(_fetch(url, parser), 2, 9):
         sched.set_date(d)

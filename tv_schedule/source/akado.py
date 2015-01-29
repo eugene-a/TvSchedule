@@ -4,7 +4,7 @@ import pytz
 import httplib2
 import lxml.etree
 
-from tv_schedule import dateutil, schedule
+from tv_schedule import schedule
 
 
 def need_channel_code():
@@ -13,8 +13,8 @@ def need_channel_code():
 channel_code = None
 
 _source_tz = pytz.timezone('Europe/Moscow')
-_last_monday = dateutil.last_weekday(
-    datetime.datetime.now(_source_tz).date(), 0)
+_today = datetime.datetime.now(_source_tz).date()
+_weekday_now = _today.weekday()
 _daydelta = datetime.timedelta(1)
 
 _URL = 'http://tv.akado.ru/channels/'
@@ -36,9 +36,9 @@ def get_schedule(channel, tz):
         return []
 
     sched = schedule.Schedule(tz, _source_tz)
-    d = _last_monday
+    d = _today
 
-    for i in range(7):
+    for i in range(_weekday_now, 7):
         sched.set_date(d)
         path = ch_code + d.strftime('.html?date=%Y-%m-%d')
         tv_common = _fetch(path)

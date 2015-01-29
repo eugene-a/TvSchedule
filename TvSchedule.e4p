@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project TvSchedule -->
-<!-- Saved: 2015-01-22, 15:43:57 -->
+<!-- Saved: 2015-01-29, 12:19:02 -->
 <!-- Copyright (C) 2015 Eugene Alterman, eugalt@gmail.com -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -33,6 +33,9 @@
     <Source>chanscanner/akado.py</Source>
     <Source>chanscanner/vsetv.py</Source>
     <Source>chanscanner/__init__.py</Source>
+    <Source>chanscanner/yandex.py</Source>
+    <Source>tv_schedule/source/yandex.py</Source>
+    <Source>chanscanner/tv_ua.py</Source>
   </Sources>
   <Forms/>
   <Translations/>
