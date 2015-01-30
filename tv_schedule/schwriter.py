@@ -76,7 +76,7 @@ def _prepare_summary(s):
     s = re.sub(r'\s+\n', '\n', s)                      # remove trailing spaces
     s = re.sub(r'\n+', '\n', s)                         # remove empty lines
     s = re.sub(r'(\w)\n', r'\1.\n', s)              # end line with a period
-    return re.sub(_date_pattern, r'\1-\2', s)  # dash between day and month
+    return re.sub(_date_pattern, r'\1-\2', s)     # dash between day and month
 
 
 class _ScheduleWriter:

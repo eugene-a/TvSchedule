@@ -63,12 +63,13 @@ class Schedule:
             self._summaries[show.key] = show.summary
 
     def set_summary(self, summary):
-        summary = summary.strip()
         if summary:
-            show = self._shows[-1]
-            show.summary = summary
-            if show.key is not None:
-                self._summaries[show.key] = summary
+            summary.strip()
+            if summary:
+                show = self._shows[-1]
+                show.summary = summary
+                if show.key is not None:
+                    self._summaries[show.key] = summary
 
     def set_episode(self):
         self._shows[-1].episode = True

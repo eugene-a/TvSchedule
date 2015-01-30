@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project TvSchedule -->
-<!-- Saved: 2015-01-29, 12:19:02 -->
+<!-- Saved: 2015-01-30, 13:52:17 -->
 <!-- Copyright (C) 2015 Eugene Alterman, eugalt@gmail.com -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -20,7 +20,6 @@
     <Source>tv_schedule/env.py</Source>
     <Source>tv_schedule/schedule.py</Source>
     <Source>tv_schedule/schwriter.py</Source>
-    <Source>tv_schedule/tv_schedule.py</Source>
     <Source>tv_schedule/__init__.py</Source>
     <Source>tv_schedule/source/akado.py</Source>
     <Source>tv_schedule/source/channel9.py</Source>
@@ -36,6 +35,7 @@
     <Source>chanscanner/yandex.py</Source>
     <Source>tv_schedule/source/yandex.py</Source>
     <Source>chanscanner/tv_ua.py</Source>
+    <Source>tv_schedule/source/ua_tv.py</Source>
   </Sources>
   <Forms/>
   <Translations/>
