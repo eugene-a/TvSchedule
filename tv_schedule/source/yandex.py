@@ -1,6 +1,7 @@
 import datetime
 import os.path
 import json
+import pkg_resources
 import lxml.etree
 import httplib2
 import pytz
@@ -15,7 +16,7 @@ channel_code = None
 _source_tz = pytz.timezone('Europe/Kiev')
 _BASE_URL = 'https://tv.yandex.ru'
 
-_cacerts = os.path.join(os.path.dirname(__file__), 'ssl', 'cacerts.crt')
+_cacerts = pkg_resources.resource_filename(__name__, 'ssl/cacerts.crt')
 _http = httplib2.Http(ca_certs=_cacerts)
 _parser = lxml.etree.HTMLParser(encoding='utf-8')
 
