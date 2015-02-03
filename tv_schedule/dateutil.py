@@ -36,7 +36,7 @@ def _nominative_month(s):
 
 # month as an integer and year as a string with a leading space
 def _get_month_and_year(d):
-    return (d.month, ' ' + str(d.year))
+    return d.month, ' ' + str(d.year)
 
 _month, _year = _get_month_and_year(datetime.date.today())
 
@@ -63,9 +63,9 @@ def parse_date(s, format):
     return _fixyear(dt.date())
 
 
-# the latest date of the given weekday on or before the given date
-def last_weekday(d,  weekday):
-    delta = d.weekday() - weekday
-    if delta < 0:
-        delta += 7
-    return d - datetime.timedelta(delta)
+# TV programs for a day usually begin in the morning
+# and end in the  morning of the next day.
+def tv_date_now(tz, hours=5, minutes=0):
+    now = datetime.datetime.now(tz)
+    shift = datetime.timedelta(hours=hours, minutes=minutes)
+    return (now - shift).date()

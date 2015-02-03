@@ -21,7 +21,7 @@ def _get_env():
     else:
         raise Exception(system + ': unsupported platform')
 
-    return (windows, locale_ru)
+    return windows, locale_ru
 
 windows, locale_ru = _get_env()
 

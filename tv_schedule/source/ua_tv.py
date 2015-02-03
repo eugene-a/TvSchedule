@@ -3,7 +3,7 @@ import json
 import httplib2
 import lxml.html
 import pytz
-from tv_schedule import schedule
+from tv_schedule import schedule, dateutil
 
 
 def need_channel_code():
@@ -17,7 +17,7 @@ _URL = 'http://tv.ua/ajax/updateProgsOnChannel?date=%d.%m.%Y&channel='
 _http = httplib2.Http()
 _parser = lxml.html.HTMLParser()
 
-_today = datetime.datetime.now(_source_tz).date()
+_today = dateutil.tv_date_now(_source_tz)
 _weekday_now = _today.weekday()
 _daydelta = datetime.timedelta(1)
 

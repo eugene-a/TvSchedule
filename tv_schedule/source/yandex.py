@@ -5,7 +5,7 @@ import pkg_resources
 import lxml.etree
 import httplib2
 import pytz
-from tv_schedule import schedule,  config
+from tv_schedule import dateutil, schedule, config
 
 
 def need_channel_code():
@@ -20,21 +20,23 @@ _cacerts = pkg_resources.resource_filename(__name__, 'ssl/cacerts.crt')
 _http = httplib2.Http(ca_certs=_cacerts)
 _parser = lxml.etree.HTMLParser(encoding='utf-8')
 
-_today = datetime.datetime.now(_source_tz).date()
+_today = dateutil.tv_date_now(_source_tz)
 _weekday_now = _today.weekday()
 _daydelta = datetime.timedelta(1)
 
+_RETRY_COUNT = 3
+
 
 def _fetch(path):
-    try:
-        url = _BASE_URL + path
-        content = _http.request(url)[1]
-        doc = lxml.etree.fromstring(content, _parser)
-        return doc[1][0][1][0]
-    except:
-        with open(os.path.join(config.output(), 'content.html', 'wb')) as f:
-            f.write(content)
-        raise
+    url = _BASE_URL + path
+    content = _http.request(url)[1]
+    if len(content) > 0:
+        # retry in the case of gateway timeout
+        for i in range(_RETRY_COUNT):
+            doc = lxml.etree.fromstring(content, _parser)
+            cont = doc[1][0]
+            if cont.tag == 'div':
+                return cont[1][0]
 
 
 _CLS_DETAILS = 'b-tv-program-details'
@@ -77,19 +79,20 @@ def get_schedule(channel, tz):
         sched.set_date(d)
         path = '/87/channels/' + ch_code + d.strftime('?date=%Y-%m-%d')
         content = _fetch(path)
-        items = content[2][0][0][0][0][0][0]
-        if items.get('class') != 'tv-splash':
-            for item in items:
-                a = item[0]
-                sched.set_time(a[0].text)
-                title = a[1].text
-                sched.set_title(title)
-                summary = summaries.get(title)
-                if summary is None:
-                    summary = get_summary(a)
-                    summaries[title] = summary
+        if content is not None:
+            items = content[2][0][0][0][0][0][0]
+            if items.get('class') != 'tv-splash':
+                for item in items:
+                    a = item[0]
+                    sched.set_time(a[0].text)
+                    title = a[1].text
+                    sched.set_title(title)
+                    summary = summaries.get(title)
+                    if summary is None:
+                        summary = get_summary(a)
+                        summaries[title] = summary
 
-                if summary:
-                    sched.set_summary(summary)
+                    if summary:
+                        sched.set_summary(summary)
         d += _daydelta
     return sched.pop()

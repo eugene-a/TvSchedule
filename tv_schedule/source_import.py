@@ -15,7 +15,7 @@ _YAML_SRC_TAG = '!src'
 def _import_source(loader, node):
     source = loader.construct_scalar(node)
     module = importlib.import_module(config.source_package() + '.' + source)
-    if(module.need_channel_code()):
+    if module.need_channel_code():
         with config.open_source(source) as f:
             module.channel_code = yaml.load(f)
     return module.get_schedule

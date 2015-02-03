@@ -4,7 +4,7 @@ import pytz
 import httplib2
 import lxml.etree
 
-from tv_schedule import schedule
+from tv_schedule import schedule, dateutil
 
 
 def need_channel_code():
@@ -13,7 +13,7 @@ def need_channel_code():
 channel_code = None
 
 _source_tz = pytz.timezone('Europe/Moscow')
-_today = datetime.datetime.now(_source_tz).date()
+_today = dateutil.tv_date_now(_source_tz)
 _weekday_now = _today.weekday()
 _daydelta = datetime.timedelta(1)
 
