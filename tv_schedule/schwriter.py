@@ -12,8 +12,12 @@ import tzlocal
 from tv_schedule import config, source_import, dateutil
 
 
-def _info_value(show):
-    return 0x10000 * show.episode + len(show.summary or '')
+def _title_value(event):
+    return (event.foreign_title << 16) + len(event.title)
+
+
+def _info_value(event):
+    return (event.episode << 16) + len(event.summary or '')
 
 _del_map = dict((ord(c), None) for c in '.,/-()" ')
 
@@ -28,30 +32,30 @@ _treshold = datetime.timedelta(minutes=20)
 
 
 # combine info from multiple sources
-def _merge(shows):
-    shows = heapq.merge(*shows)
+def _merge(events):
+    events = heapq.merge(*events)
 
     last = None
-    for show in shows:
+    for event in events:
         if last is None:
-            last = show
+            last = event
         else:
-            if show == last:
-                if show.title is not None:
-                    if len(show.title) > len(last.title):
-                        last.title = show.title
-                if _info_value(show) > _info_value(last):
-                    last.summary = show.summary
+            if event == last:
+                if event.title is not None:
+                    if _title_value(event) > _title_value(last):
+                        last.title = event.title
+                if _info_value(event) > _info_value(last):
+                    last.summary = event.summary
                 if last.summary is not None:
                     if _uniform(last.summary) == _uniform(last.title):
                         last.summary = None
-            elif show.key is not None:
-                # work around the case when multiple shows in a source
-                # are presented as a single show in another source
-                timediff = show.datetime - last.datetime
-                if timediff < _treshold or show.title not in last.title:
+            elif event.key is not None:
+                # work around the case when multiple event in a source
+                # are presented as a single event in another source
+                timediff = event.datetime - last.datetime
+                if timediff < _treshold or event.title not in last.title:
                     yield last
-                    last = show
+                    last = event
     if last is not None:
         yield last
 
@@ -103,9 +107,9 @@ class _ScheduleWriter:
         if not isinstance(sources, list):
             sources = [sources, ]
         for source in sources:
-            shows = source(channel, self._tz)
-            if len(shows) > 0:
-                return shows
+            events = source(channel, self._tz)
+            if len(events) > 0:
+                return events
         return []
 
     def _get_schedule(self, channel, sources):
@@ -115,25 +119,25 @@ class _ScheduleWriter:
         sources = self._source.get(channel) or self._default_source
 
         last_date = None
-        for show in self._get_schedule(channel, sources):
-            date = show.datetime.date()
+        for event in self._get_schedule(channel, sources):
+            date = event.datetime.date()
             if date != last_date:
                 s = date.strftime('%A, %d %B').title()
                 s = '\n' + dateutil.genitive_month(s) + '. '
-                show_date = s + channel + '\n'
+                event_date = s + channel + '\n'
                 summary_date = s + '(Анонс)' + channel + '\n'
-                self._f_prog.write(show_date)
+                self._f_prog.write(event_date)
                 last_date = date
-            show_str = str(show) + '\n'
-            self._f_prog.write(show_str)
-            summary = show.summary
+            event_str = str(event) + '\n'
+            self._f_prog.write(event_str)
+            summary = event.summary
             if summary is not None:
-                if summary.startswith(show. title):
-                    summary = summary[len(show.title):].lstrip('. ')
+                if summary.startswith(event. title):
+                    summary = summary[len(event.title):].lstrip('. ')
                 if summary_date is not None:
                     self._f_sum.write(summary_date)
                     summary_date = None
-                self._f_sum.write(show_str)
+                self._f_sum.write(event_str)
                 self._f_sum.write(_prepare_summary(summary) + '\n')
         return last_date is not None
 

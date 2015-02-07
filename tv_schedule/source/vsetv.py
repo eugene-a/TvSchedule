@@ -1,4 +1,3 @@
-import itertools
 import datetime
 import lxml.etree
 import httplib2
@@ -26,14 +25,26 @@ _parser = lxml.etree.HTMLParser()
 
 def _fetch(path):
     content = _http.request(_URL + path, headers=_headers)[1]
-    doc = lxml.etree.fromstring(content, _parser)
-    return doc[3][6][3][0]  # main    (4 comments between top and base tables)
+    return lxml.etree.fromstring(content, _parser)
 
 
-def _get_summary(path):
-    table = _fetch(path)[1]
+def main(doc):
+    return doc[3][6][3][0]
+
+
+def _get_title_and_summary(path):
+    doc = _fetch(path)
+    foreign_title = False
+    title = doc[0][0].text
+    if title[-1] == ')':
+        foreign_title = True
+        title = title[title.rindex('(') + 1: -1]
+    else:
+        title = title[title.index('|') + 1:]
+
+    table = main(doc)[1]
     if table.get('id') is None:
-        return
+        return title, foreign_title, None
 
     summary = ''
 
@@ -64,7 +75,7 @@ def _get_summary(path):
         else:
             summary += elem.text + elem.tail
 
-    return summary
+    return title, foreign_title, summary
 
 # don't load summaries for past shows
 _elapsed_limit = datetime.timedelta(hours=1)
@@ -78,9 +89,9 @@ def get_schedule(channel, tz):
     path = 'schedule_channel_' + ch_code + '_week.html'
 
     sched = schedule.Schedule(tz, _source_tz)
-    summaries = {}
-
-    for div in itertools.islice(_fetch(path), 6, None):
+    cash = {}
+    doc = _fetch(path)
+    for div in main(doc)[6:]:
         if div.get('class') == 'sometitle':
             date = dateutil.parse_date(div[0][0][0].text, '%A, %d %B')
             sched.set_date(date)
@@ -98,14 +109,21 @@ def get_schedule(channel, tz):
                         )
                         sched.set_title(title)
                     else:
-                        sched.set_title(a.text)
-                        if(elapsed < _elapsed_limit):
-                            path = a.get('href')
-                            key = path[: path.find('.')]
-                            summary = summaries.get(key)
-                            if summary is None:
-                                summary = _get_summary(path)
-                                summaries[key] = summary
-                            if summary:
-                                sched.set_summary(summary)
+                        path = a.get('href')
+                        key = path[: path.find('.')]
+                        title, foreign_title, summary = (
+                            cash.get(key) or (None, False, None)
+                        )
+                        if title is None:
+                            if elapsed > _elapsed_limit:
+                                title = a.text
+                            else:
+                                cash[key] = title, foreign_title, summary = (
+                                    _get_title_and_summary(path)
+                                )
+                        sched.set_title(title)
+                        if foreign_title:
+                            sched.set_foreign_title()
+                        if summary:
+                            sched.set_summary(summary)
     return sched.pop()

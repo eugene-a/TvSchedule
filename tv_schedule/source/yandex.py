@@ -1,11 +1,9 @@
 import datetime
-import os.path
 import json
 import pkg_resources
 import lxml.etree
 import httplib2
-import pytz
-from tv_schedule import dateutil, schedule, config
+from tv_schedule import dateutil, schedule
 
 
 def need_channel_code():
@@ -13,22 +11,21 @@ def need_channel_code():
 
 channel_code = None
 
-_source_tz = pytz.timezone('Europe/Kiev')
-_BASE_URL = 'https://tv.yandex.ru'
+_URL = 'https://tv.yandex.ru'
+_CLS_DETAILS = 'b-tv-program-details'
+_CLS_DESCR = 'b-tv-program-description'
 
 _cacerts = pkg_resources.resource_filename(__name__, 'ssl/cacerts.crt')
 _http = httplib2.Http(ca_certs=_cacerts)
 _parser = lxml.etree.HTMLParser(encoding='utf-8')
 
-_today = dateutil.tv_date_now(_source_tz)
-_weekday_now = _today.weekday()
 _daydelta = datetime.timedelta(1)
 
 _RETRY_COUNT = 3
 
 
 def _fetch(path):
-    url = _BASE_URL + path
+    url = _URL + path
     content = _http.request(url)[1]
     if len(content) > 0:
         # retry in the case of gateway timeout
@@ -37,10 +34,6 @@ def _fetch(path):
             cont = doc[1][0]
             if cont.tag == 'div':
                 return cont[1][0]
-
-
-_CLS_DETAILS = 'b-tv-program-details'
-_CLS_DESCR = 'b-tv-program-description'
 
 
 def get_summary(a):
@@ -72,10 +65,13 @@ def get_schedule(channel, tz):
     if ch_code is None:
         return []
 
+    today = dateutil.tv_date_now(tz)
+    weekday_now = today.weekday()
+
     sched = schedule.Schedule(tz, tz)
     summaries = {}
-    d = _today
-    for i in range(_weekday_now, 7):
+    d = today
+    for i in range(weekday_now, 7):
         sched.set_date(d)
         path = '/87/channels/' + ch_code + d.strftime('?date=%Y-%m-%d')
         content = _fetch(path)

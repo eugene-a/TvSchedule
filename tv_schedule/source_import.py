@@ -26,8 +26,8 @@ yaml.add_constructor(_YAML_SRC_TAG, _import_source)
 def import_sources():
     class Sources:
         def __init__(self, dct):
-            self.default = dct[_OPTION_DEFAULT]
-            self.special = dct[_OPTION_SPECIAL]
+            self.default = dct.get(_OPTION_DEFAULT, [])
+            self.special = dct.get(_OPTION_SPECIAL, [])
 
     with config.open_source(_CHANNEL_ASSIGNMENT) as f:
         return Sources(yaml.load(f))

@@ -21,7 +21,7 @@ setuptools.setup(name='tv_schedule',
                  },
                  package_data={'tv_schedule': ['channels.txt'],
                                'tv_schedule.source': [
-                               'channels/*.yaml',  'ssl/cacerts.crt'
+                               'channels/*.yaml', 'ssl/cacerts.crt'
                      ]
                  }
                  )

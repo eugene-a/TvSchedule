@@ -1,20 +1,21 @@
 import datetime
 
 
-class Show:
+class Event:
     def __init__(self, dt):
         self.datetime = dt
         self.key = self.title = self.summary = None
         self.episode = False
+        self.foreign_title = False
 
     def __eq__(self, other):
-        if isinstance(other, Show):
+        if isinstance(other, Event):
             return self.datetime == other.datetime
         else:
             return id(self) == id(other)
 
     def __lt__(self, other):
-        if isinstance(other, Show):
+        if isinstance(other, Event):
             return self.datetime < other.datetime
         else:
             return id(self) < id(other)
@@ -28,8 +29,8 @@ _daydelta = datetime.timedelta(1)
 class Schedule:
     def __init__(self, local_tz, source_tz):
         self._local_tz, self._source_tz = local_tz, source_tz
-        self._shows = []
-        # a stored summary is used when the show is repeated later in a week
+        self._events = []
+        # a stored summary is used when an event is repeated later in a week
         self._summaries = {}
 
     def set_date(self, d):
@@ -43,42 +44,47 @@ class Schedule:
         self._source_hour = hour
         time = datetime.time(hour, minute)
         dt = datetime.datetime.combine(self._source_date, time)
-        # convert to local time if necessary
+        return self.set_datetime(dt)
+
+    def set_datetime(self, dt):
         dt = self._source_tz.localize(dt).astimezone(self._local_tz)
-        self._shows.append(Show(dt))
+        self._events.append(Event(dt))
         return dt
 
     def set_title(self, title):
         if title is None:
             return
 
-        show = self._shows[-1]
-        show.title = title.rstrip('.')
+        event = self._events[-1]
+        event.title = title.rstrip('.')
         i = title.find('"')
         if i < 0:
-            show.key = title.strip('. ')
+            event.key = title.strip('. ')
         else:
-            show.key = title[i + 1: title.find('"', i + 1)]
-        if show.summary is not None:
-            self._summaries[show.key] = show.summary
+            event.key = title[i + 1: title.find('"', i + 1)]
+        if event.summary is not None:
+            self._summaries[event.key] = event.summary
 
     def set_summary(self, summary):
         if summary:
             summary.strip()
             if summary:
-                show = self._shows[-1]
-                show.summary = summary
-                if show.key is not None:
-                    self._summaries[show.key] = summary
+                event = self._events[-1]
+                event.summary = summary
+                if event.key is not None:
+                    self._summaries[event.key] = summary
 
     def set_episode(self):
-        self._shows[-1].episode = True
+        self._events[-1].episode = True
+
+    def set_foreign_title(self):
+        self._events[-1].foreign_title = True
 
     def pop(self):
-        shows = self._shows
-        for show in shows:
-            if show.summary is None:
-                show.summary = self._summaries.get(show.key)
-        self._shows = []
+        events = self._events
+        for event in events:
+            if event.summary is None:
+                event.summary = self._summaries.get(event.key)
+        self._events = []
         self._summaries.clear()
-        return shows
+        return events

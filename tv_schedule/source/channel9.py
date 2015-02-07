@@ -16,18 +16,19 @@ def _fetch(url, parser):
 
 
 def get_schedule(channel, tz):
+    url = 'http://9tv.co.il/tv-shows/'
+
     source_tz = pytz.timezone('Israel')
     daydelta = datetime.timedelta(1)
 
     sched = schedule.Schedule(tz, source_tz)
 
-    url = 'http://9tv.co.il/tv-shows/'
     parser = lxml.etree.HTMLParser()
 
     today = dateutil.tv_date_now(source_tz, 6, 30)
     weekday = today.weekday()
-    
-    #start ing from Sunday
+
+    # starting from Sunday
     d = today - datetime.timedelta(weekday + 1) if weekday < 6 else today
 
     for tv_program in itertools.islice(_fetch(url, parser), 2, 9):

@@ -10,48 +10,13 @@ def need_channel_code():
 
 channel_code = None
 
-
-class _Target:
-    def set_schedule(self, sched):
-        self._schedule = sched
-
-    def start(self, tag, attrib):
-        if tag == 'div':
-            self._div_class = attrib.get('class')
-        self._data_str = ''
-
-    def data(self, data):
-        self._data_str += data
-
-    def end(self, tag):
-        if tag == 'div':
-            if self._div_class == 'day_front':
-                date_str = dateutil.fromwin(self._data_str)
-                date = dateutil.parse_date(date_str, '%a, %d. %b')
-                self._schedule.set_date(date)
-            elif self._div_class == 'progtime':
-                self._schedule.set_time(self._data_str)
-            elif self._div_class == 'descript':
-                summary = self._data_str.lstrip().lstrip(':')
-                self._schedule.set_summary(summary)
-        elif tag == 'h3' and self._div_class == 'descript':
-            title = self._data_str
-            self._data_str = ''
-            if len(title) > 0 and title[0] == '(' and title[-1] == ')':
-                title = title[1: -1]
-            title = title.rstrip()
-            self._schedule.set_title(title)
-            if title == 'Интерны':
-                self._schedule.set_episode()
-
-    def close(self):
-        pass
-
+_URL = ('http://www.viasat.lv/viasat0/tv-programma27/tv-programma28/' +
+        '_/all/0/{}/?viewweek=1')
 
 _source_tz = pytz.timezone('Europe/Riga')
 
 _http = httplib2.Http()
-_parser = lxml.etree.HTMLParser(target=_Target())
+_parser = lxml.etree.HTMLParser()
 
 
 def get_schedule(channel, tz):
@@ -60,10 +25,30 @@ def get_schedule(channel, tz):
         return []
 
     sched = schedule.Schedule(tz, _source_tz)
-    _parser.target.set_schedule(sched)
 
-    url = 'http://www.viasat.lv/viasat0/tv-programma27/'       \
-        'tv-programma28/_/all/0/' + ch_code + '/?viewweek=1'
+    url = _URL.format(ch_code)
+    doc = lxml.etree.fromstring(_http.request(url)[1], _parser)
+    prog = doc[1][0][5][0][3][0][1][0]
 
-    lxml.etree.fromstring(_http.request(url)[1], _parser)
+    new_date = False
+    for div in prog[0][1]:
+        if len(div) == 0:
+            new_date = True
+        elif new_date:
+            new_date = False
+            date_str = div[0][0][1][0].text
+            date_str = dateutil.fromwin(date_str)
+            date = dateutil.parse_date(date_str, '%a, %d. %b')
+            sched.set_date(date)
+        else:
+            sched.set_time(div[0].text)
+            h3 = div[4][-3][0]
+            if len(h3) == 0:
+                title = h3.text
+            else:
+                sched.set_foreign_title()
+                title = h3[0].text
+                title = title[1: -1]
+            sched.set_title(title.rstrip())
+            sched.set_summary(h3.tail)
     return sched.pop()

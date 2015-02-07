@@ -11,14 +11,13 @@ def need_channel_code():
 
 channel_code = None
 
-_source_tz = pytz.timezone('Europe/Kiev')
 _URL = 'http://tv.ua/ajax/updateProgsOnChannel?date=%d.%m.%Y&channel='
+
+_source_tz = pytz.timezone('Europe/Kiev')
 
 _http = httplib2.Http()
 _parser = lxml.html.HTMLParser()
 
-_today = dateutil.tv_date_now(_source_tz)
-_weekday_now = _today.weekday()
 _daydelta = datetime.timedelta(1)
 
 
@@ -35,11 +34,14 @@ def get_schedule(channel, tz):
     if ch_code is None:
         return []
 
+    today = dateutil.tv_date_now(_source_tz)
+    weekday_now = today.weekday()
+
     sched = schedule.Schedule(tz, _source_tz)
     summaries = {}
     url = _URL + ch_code
-    d = _today
-    for i in range(_weekday_now, 7):
+    d = today
+    for i in range(weekday_now, 7):
         content = _http.request(d.strftime(url))[1].decode()
         html = json.loads(content)['html']
         if html[0] == '<':

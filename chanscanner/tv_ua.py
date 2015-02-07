@@ -12,4 +12,4 @@ with open(os.path.join(config.output_dir(), 'tv_ua.txt'), 'w') as f:
     for a in channels.find_class('orange'):
         ch_code = os.path.basename(a.get('href'))
         ch_code = '"' + ch_code[ch_code.rindex('-') + 1:] + '"'
-        f.write('{}: {}\n'.format(a[0].text,  ch_code))
+        f.write('{}: {}\n'.format(a[0].text, ch_code))

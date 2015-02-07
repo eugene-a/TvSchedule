@@ -13,8 +13,6 @@ def need_channel_code():
 channel_code = None
 
 _source_tz = pytz.timezone('Europe/Moscow')
-_today = dateutil.tv_date_now(_source_tz)
-_weekday_now = _today.weekday()
 _daydelta = datetime.timedelta(1)
 
 _URL = 'http://tv.akado.ru/channels/'
@@ -35,10 +33,13 @@ def get_schedule(channel, tz):
     if ch_code is None:
         return []
 
-    sched = schedule.Schedule(tz, _source_tz)
-    d = _today
+    today = dateutil.tv_date_now(_source_tz)
+    weekday_now = today.weekday()
 
-    for i in range(_weekday_now, 7):
+    sched = schedule.Schedule(tz, _source_tz)
+    d = today
+
+    for i in range(weekday_now, 7):
         sched.set_date(d)
         path = ch_code + d.strftime('.html?date=%Y-%m-%d')
         tv_common = _fetch(path)
