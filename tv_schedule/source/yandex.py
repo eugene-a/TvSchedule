@@ -69,7 +69,7 @@ def get_schedule(channel, tz):
     weekday_now = today.weekday()
 
     sched = schedule.Schedule(tz, tz)
-    summaries = {}
+    cash = {}
     d = today
     for i in range(weekday_now, 7):
         sched.set_date(d)
@@ -83,10 +83,10 @@ def get_schedule(channel, tz):
                     sched.set_time(a[0].text)
                     title = a[1].text
                     sched.set_title(title)
-                    summary = summaries.get(title)
+                    summary = cash.get(title)
                     if summary is None:
                         summary = get_summary(a)
-                        summaries[title] = summary
+                        cash[title] = summary
 
                     if summary:
                         sched.set_summary(summary)

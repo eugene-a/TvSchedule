@@ -16,6 +16,9 @@ def _fetch(url, parser):
 
 
 def get_schedule(channel, tz):
+    if channel != '9 Канал Израиль':
+        return []
+
     url = 'http://9tv.co.il/tv-shows/'
 
     source_tz = pytz.timezone('Israel')

@@ -1,3 +1,4 @@
+import urllib.parse
 import datetime
 import json
 import httplib2
@@ -11,7 +12,7 @@ def need_channel_code():
 
 channel_code = None
 
-_URL = 'http://tv.ua/ajax/updateProgsOnChannel?date=%d.%m.%Y&channel='
+_URL = 'http://tv.ua/ajax/updateProgsOnChannel?'
 
 _source_tz = pytz.timezone('Europe/Kiev')
 
@@ -38,11 +39,14 @@ def get_schedule(channel, tz):
     weekday_now = today.weekday()
 
     sched = schedule.Schedule(tz, _source_tz)
-    summaries = {}
-    url = _URL + ch_code
+    cash = {}
+    arg = {'channel': ch_code}
+
     d = today
     for i in range(weekday_now, 7):
-        content = _http.request(d.strftime(url))[1].decode()
+        arg['date'] = d.strftime('%d.%m.%Y')
+        url = _URL + urllib.parse.urlencode(arg)
+        content = _http.request(url)[1].decode()
         html = json.loads(content)['html']
         if html[0] == '<':
             table = lxml.html.fragment_fromstring(html)
@@ -55,10 +59,10 @@ def get_schedule(channel, tz):
                     sched.set_title(a[0].text)
                     href = a.get('href')
                     if href is not None:
-                        summary = summaries.get(href)
+                        summary = cash.get(href)
                         if summary is None:
                             summary = get_summary(href)
-                            summaries[href] = summary
+                            cash[href] = summary
 
                         sched.set_summary(summary)
                 d += _daydelta

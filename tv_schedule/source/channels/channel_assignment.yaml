@@ -1,6 +1,5 @@
 default:
-  [!src vsetv, !src akado, !src mail_ru, !src viasat]
+  [!src ntvplus, !src yandex, !src vsetv, !src akado, !src viasat]
 special:
-  - [!src channel9, [9 Канал Израиль]] 
-
-
+  - [!src eurokino, [Еврокино]]
+  - [!src channel9, [9 Канал Израиль]]

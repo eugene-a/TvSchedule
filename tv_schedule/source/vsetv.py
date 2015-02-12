@@ -78,7 +78,7 @@ def _get_title_and_summary(path):
     return title, foreign_title, summary
 
 # don't load summaries for past shows
-_elapsed_limit = datetime.timedelta(hours=1)
+_elapsed_limit = datetime.timedelta(hours=4)
 
 
 def get_schedule(channel, tz):

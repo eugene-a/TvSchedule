@@ -12,18 +12,20 @@ import tzlocal
 from tv_schedule import config, source_import, dateutil
 
 
-def _title_value(event):
-    return (event.foreign_title << 16) + len(event.title)
+def _title_score(event):
+    title = event.title
+    score = 0 if title.isupper() else len(title)
+    return (event.foreign_title << 16) + score
 
 
-def _info_value(event):
+def _info_score(event):
     return (event.episode << 16) + len(event.summary or '')
 
 _del_map = dict((ord(c), None) for c in '.,/-()" ')
 
 
-def _uniform(s):
-    s = s.translate(_del_map).lower()
+def _normalize(s):
+    s = s.translate(_del_map).casefold()
     s = s.replace('год', 'г')
     s = s.replace('эпизод', '')
     return s.replace('эп', '')
@@ -42,12 +44,12 @@ def _merge(events):
         else:
             if event == last:
                 if event.title is not None:
-                    if _title_value(event) > _title_value(last):
+                    if _title_score(event) > _title_score(last):
                         last.title = event.title
-                if _info_value(event) > _info_value(last):
+                if _info_score(event) > _info_score(last):
                     last.summary = event.summary
                 if last.summary is not None:
-                    if _uniform(last.summary) == _uniform(last.title):
+                    if _normalize(last.summary) == _normalize(last.title):
                         last.summary = None
             elif event.key is not None:
                 # work around the case when multiple event in a source

@@ -1,4 +1,5 @@
 import time
+import urllib.parse
 import datetime
 import json
 import httplib2
@@ -12,9 +13,8 @@ def need_channel_code():
 channel_code = None
 
 _URL = 'http://tv.mail.ru/ext/admtv/?'
-_URL_CHAN = _URL + 'sch.main=1&sch.date=%Y-%m-%d&&sch.channel='
-_URL_EVENT = _URL + 'sch.tv_event_id='
-del _URL
+
+_chan_arg = {'sch.main': 1}
 
 _daydelta = datetime.timedelta(1)
 
@@ -53,9 +53,11 @@ def _fetch(url):
 
 
 def _get_summary(event_id):
-    event = _fetch(_URL_EVENT + event_id)['tv_event']
+    url = _URL + urllib.parse.urlencode({'sch.tv_event_id': event_id})
+    event = _fetch(url)['tv_event']
     html = lxml.html.fragment_fromstring(event['descr'], create_parent=True)
     return html.text_content()
+
 
 def get_schedule(channel, tz):
     ch_code = channel_code.get(channel)
@@ -66,11 +68,13 @@ def get_schedule(channel, tz):
     weekday_now = today.weekday()
 
     sched = schedule.Schedule(tz, tz)
-    summaries = {}
-    url = _URL_CHAN + ch_code
+    cash = {}
+    _chan_arg['sch:channel'] = ch_code
     d = today
     for i in range(weekday_now, 7):
-        chan_type = _fetch(d.strftime(url))['channel_type']
+        _chan_arg['sch.date'] = d.strftime('%Y-%m-%d')
+        url = _URL + urllib.parse.urlencode(_chan_arg)
+        chan_type = _fetch(url)['channel_type']
         sch = next(iter((chan_type.values())))[0]['schedule']
         for event in sch:
             fmt = '%Y-%m-%d %H:%M:%S'
@@ -78,10 +82,10 @@ def get_schedule(channel, tz):
             sched.set_datetime(dt)
             sched.set_title(event['name'])
             event_id = event['id']
-            summary = summaries.get(event_id)
+            summary = cash.get(event_id)
             if summary is None:
                 summary = _get_summary(event_id)
-                summaries[event_id] = summary
+                cash[event_id] = summary
             sched.set_summary(summary)
         d += _daydelta
     return sched.pop()
