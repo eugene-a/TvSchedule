@@ -4,7 +4,7 @@ import datetime
 class Event:
     def __init__(self, dt):
         self.datetime = dt
-        self.key = self.title = self.summary = None
+        self.key = self.title = self.descr = None
         self.episode = False
         self.foreign_title = False
 
@@ -30,8 +30,8 @@ class Schedule:
     def __init__(self, local_tz, source_tz):
         self._local_tz, self._source_tz = local_tz, source_tz
         self._events = []
-        # a stored summary is used when an event is repeated later in a week
-        self._summaries = {}
+        # a stored descr is used when an event is repeated later in a week
+        self._cash = {}
 
     def set_date(self, d):
         self._source_date = d
@@ -62,17 +62,17 @@ class Schedule:
             event.key = title.strip('. ')
         else:
             event.key = title[i + 1: title.find('"', i + 1)]
-        if event.summary is not None:
-            self._summaries[event.key] = event.summary
+        if event.descr is not None:
+            self._cash[event.key] = event.descr
 
-    def set_summary(self, summary):
-        if summary:
-            summary.strip()
-            if summary:
+    def set_descr(self, descr):
+        if descr:
+            descr.strip()
+            if descr:
                 event = self._events[-1]
-                event.summary = summary
+                event.descr = descr
                 if event.key is not None:
-                    self._summaries[event.key] = summary
+                    self._cash[event.key] = descr
 
     def set_episode(self):
         self._events[-1].episode = True
@@ -83,8 +83,8 @@ class Schedule:
     def pop(self):
         events = self._events
         for event in events:
-            if event.summary is None:
-                event.summary = self._summaries.get(event.key)
+            if event.descr is None:
+                event.descr = self._cash.get(event.key)
         self._events = []
-        self._summaries.clear()
+        self._cash.clear()
         return events

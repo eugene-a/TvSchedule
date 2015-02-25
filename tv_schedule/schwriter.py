@@ -19,7 +19,7 @@ def _title_score(event):
 
 
 def _info_score(event):
-    return (event.episode << 16) + len(event.summary or '')
+    return (event.episode << 16) + len(event.descr or '')
 
 _del_map = dict((ord(c), None) for c in '.,/-()" ')
 
@@ -47,10 +47,10 @@ def _merge(events):
                     if _title_score(event) > _title_score(last):
                         last.title = event.title
                 if _info_score(event) > _info_score(last):
-                    last.summary = event.summary
-                if last.summary is not None:
-                    if _normalize(last.summary) == _normalize(last.title):
-                        last.summary = None
+                    last.descr = event.descr
+                if last.descr is not None:
+                    if _normalize(last.descr) == _normalize(last.title):
+                        last.descr = None
             elif event.key is not None:
                 # work around the case when multiple event in a source
                 # are presented as a single event in another source
@@ -77,12 +77,12 @@ _date_pattern = _create_date_pattern()
 del _create_date_pattern
 
 
-def _prepare_summary(s):
+def _prepare_descr(s):
     s = s.strip()
-    s = re.sub(r'\s+\n', '\n', s)                      # remove trailing spaces
-    s = re.sub(r'\n+', '\n', s)                         # remove empty lines
-    s = re.sub(r'(\w)\n', r'\1.\n', s)              # end line with a period
-    return re.sub(_date_pattern, r'\1-\2', s)     # dash between day and month
+    s = re.sub(r'\s+\n', '\n', s)               # remove trailing spaces
+    s = re.sub(r'\n+', '\n', s)                 # remove empty lines
+    s = re.sub(r'(\w)\n', r'\1.\n', s)          # end line with a period
+    return re.sub(_date_pattern, r'\1-\2', s)   # dash between day and month
 
 
 class _ScheduleWriter:
@@ -127,20 +127,20 @@ class _ScheduleWriter:
                 s = date.strftime('%A, %d %B').title()
                 s = '\n' + dateutil.genitive_month(s) + '. '
                 event_date = s + channel + '\n'
-                summary_date = s + '(Анонс)' + channel + '\n'
+                descr_date = s + '(Анонс)' + channel + '\n'
                 self._f_prog.write(event_date)
                 last_date = date
             event_str = str(event) + '\n'
             self._f_prog.write(event_str)
-            summary = event.summary
-            if summary is not None:
-                if summary.startswith(event. title):
-                    summary = summary[len(event.title):].lstrip('. ')
-                if summary_date is not None:
-                    self._f_sum.write(summary_date)
-                    summary_date = None
+            descr = event.descr
+            if descr is not None:
+                if descr.startswith(event. title):
+                    descr = descr[len(event.title):].lstrip('. ')
+                if descr_date is not None:
+                    self._f_sum.write(descr_date)
+                    descr_date = None
                 self._f_sum.write(event_str)
-                self._f_sum.write(_prepare_summary(summary) + '\n')
+                self._f_sum.write(_prepare_descr(descr) + '\n')
         return last_date is not None
 
 
@@ -165,7 +165,7 @@ def write_schedule():
     os.makedirs(output, exist_ok=True)
 
     schedule = os.path.join(output, 'schedule.txt')
-    summaries = os.path.join(output, 'summaries.txt')
+    summaries = os.path.join(output, 'description.txt')
     missing = os.path.join(output, 'missing.txt')
 
     with contextlib.ExitStack() as stack:

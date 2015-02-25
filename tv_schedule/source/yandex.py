@@ -1,4 +1,5 @@
 import datetime
+import urllib.parse
 import json
 import pkg_resources
 import lxml.etree
@@ -24,8 +25,8 @@ _daydelta = datetime.timedelta(1)
 _RETRY_COUNT = 3
 
 
-def _fetch(path):
-    url = _URL + path
+def _fetch(url):
+    url = _URL + url
     content = _http.request(url)[1]
     if len(content) > 0:
         # retry in the case of gateway timeout
@@ -36,28 +37,40 @@ def _fetch(path):
                 return cont[1][0]
 
 
-def get_summary(a):
+def get_descr(a):
     content = _fetch(a.get('href'))
     td = content[1][0][0]
 
-    summary = ''
+    descr = ''
     d = next((x for x in td if x.get('class') == _CLS_DETAILS), None)
     if d is not None:
         for row in d[0]:
-            summary += row[0].text + ' '
+            descr += row[0].text + ' '
             val = row[1]
-            summary += val.text or val[0].text
-            summary += '\n'
+            descr += val.text or val[0].text
+            descr += '\n'
         dnext = d.getnext()
         if dnext is not None and dnext.get('class') == _CLS_DESCR:
-            descr = dnext[0]
-            summary += descr[0].text
-            if len(descr) > 1:
-                summary += ' '
-                dc = json.loads(descr[1].get('data-bem'))
-                summary += dc['b-tv-cut-button']['content'][0]['content']
-            summary += '\n'
-    return summary
+            ds = dnext[0]
+            descr += ds[0].text
+            if len(ds) > 1:
+                descr += ' '
+                dc = json.loads(ds[1].get('data-bem'))
+                descr += dc['b-tv-cut-button']['content'][0]['content']
+            descr += '\n'
+    return descr
+
+
+class _EventInfo:
+    def __init__(self):
+        self._cash = {}
+
+    def get(self, a):
+        title = a[1].text
+        descr = self._cash.get(title)
+        if descr is None:
+            self._cash[title] = descr = get_descr(a)
+        return title, descr
 
 
 def get_schedule(channel, tz):
@@ -69,26 +82,22 @@ def get_schedule(channel, tz):
     weekday_now = today.weekday()
 
     sched = schedule.Schedule(tz, tz)
-    cash = {}
+    event_info = _EventInfo()
     d = today
     for i in range(weekday_now, 7):
         sched.set_date(d)
-        path = '/87/channels/' + ch_code + d.strftime('?date=%Y-%m-%d')
-        content = _fetch(path)
+        query = urllib.parse.urlencode({'date': d.strftime('%Y-%m-%d')})
+        url = '/87/channels/' + ch_code + '?' + query
+        content = _fetch(url)
         if content is not None:
             items = content[2][0][0][0][0][0][0]
             if items.get('class') != 'tv-splash':
                 for item in items:
                     a = item[0]
                     sched.set_time(a[0].text)
-                    title = a[1].text
+                    title, descr = event_info.get(a)
                     sched.set_title(title)
-                    summary = cash.get(title)
-                    if summary is None:
-                        summary = get_summary(a)
-                        cash[title] = summary
-
-                    if summary:
-                        sched.set_summary(summary)
+                    if descr:
+                        sched.set_descr(descr)
         d += _daydelta
     return sched.pop()

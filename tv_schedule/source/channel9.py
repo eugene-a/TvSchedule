@@ -1,45 +1,32 @@
 import datetime
-import itertools
 import lxml.etree
 import pytz
 
-from tv_schedule import schedule, dateutil
+from tv_schedule import schedule
 
 
 def need_channel_code():
     return False
 
-
-def _fetch(url, parser):
-    etree = lxml.etree.parse(url, parser)
-    return etree.getroot()[1][1][6][0]
+_URL = 'http://9tv.co.il/tv-shows/'
+_source_tz = pytz.timezone('Israel')
+_parser = lxml.etree.HTMLParser(encoding='utf-8')
 
 
 def get_schedule(channel, tz):
     if channel != '9 Канал Израиль':
         return []
 
-    url = 'http://9tv.co.il/tv-shows/'
+    sched = schedule.Schedule(tz, _source_tz)
 
-    source_tz = pytz.timezone('Israel')
-    daydelta = datetime.timedelta(1)
-
-    sched = schedule.Schedule(tz, source_tz)
-
-    parser = lxml.etree.HTMLParser()
-
-    today = dateutil.tv_date_now(source_tz, 6, 30)
-    weekday = today.weekday()
-
-    # starting from Sunday
-    d = today - datetime.timedelta(weekday + 1) if weekday < 6 else today
-
-    for tv_program in itertools.islice(_fetch(url, parser), 2, 9):
+    etree = lxml.etree.parse(_URL, _parser)
+    content = etree.getroot()[2][8][0][4][0][0][4]
+    for tv_program in content[4: 11]:
+        date_str = tv_program.get('id')[-8:]
+        d = datetime.datetime.strptime(date_str, '%Y%m%d').date()
         sched.set_date(d)
         for li in tv_program[0]:
             span = li[0]
             sched.set_time(span.text)
             sched.set_title(span.tail)
-        d += daydelta
-
     return sched.pop()

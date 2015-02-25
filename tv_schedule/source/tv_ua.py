@@ -22,7 +22,7 @@ _parser = lxml.html.HTMLParser()
 _daydelta = datetime.timedelta(1)
 
 
-def get_summary(url):
+def get_descr(url):
     content = _http.request(url)[1]
     doc = lxml.html.document_fromstring(content)
     page = doc[1][9][0][1]
@@ -59,11 +59,11 @@ def get_schedule(channel, tz):
                     sched.set_title(a[0].text)
                     href = a.get('href')
                     if href is not None:
-                        summary = cash.get(href)
-                        if summary is None:
-                            summary = get_summary(href)
-                            cash[href] = summary
+                        descr = cash.get(href)
+                        if descr is None:
+                            descr = get_descr(href)
+                            cash[href] = descr
 
-                        sched.set_summary(summary)
+                        sched.set_descr(descr)
                 d += _daydelta
     return sched.pop()

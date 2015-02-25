@@ -14,7 +14,7 @@ channel_code = None
 
 _URL = 'http://tv.mail.ru/ext/admtv/?'
 
-_chan_arg = {'sch.main': 1}
+_chan_query = {'sch.main': 1}
 
 _daydelta = datetime.timedelta(1)
 
@@ -52,11 +52,24 @@ def _fetch(url):
     return json.loads(_http.request(url)[1].decode())
 
 
-def _get_summary(event_id):
-    url = _URL + urllib.parse.urlencode({'sch.tv_event_id': event_id})
+def _get_descr(event):
+    query = urllib.parse.urlencode({'sch.tv_event_id': event['id']})
+    url = _URL + query
     event = _fetch(url)['tv_event']
     html = lxml.html.fragment_fromstring(event['descr'], create_parent=True)
     return html.text_content()
+
+
+class _EventInfo:
+    def __init__(self):
+        self._cash = {}
+
+    def get(self, event):
+        title = event['name']
+        descr = self._cash.get(title)
+        if descr is None:
+            self._cash[title] = descr = _get_descr(event)
+        return title, descr
 
 
 def get_schedule(channel, tz):
@@ -68,24 +81,20 @@ def get_schedule(channel, tz):
     weekday_now = today.weekday()
 
     sched = schedule.Schedule(tz, tz)
-    cash = {}
-    _chan_arg['sch:channel'] = ch_code
+    event_info = _EventInfo()
+    _chan_query['sch:channel'] = ch_code
     d = today
     for i in range(weekday_now, 7):
-        _chan_arg['sch.date'] = d.strftime('%Y-%m-%d')
-        url = _URL + urllib.parse.urlencode(_chan_arg)
+        _chan_query['sch.date'] = d.strftime('%Y-%m-%d')
+        url = _URL + urllib.parse.urlencode(_chan_query)
         chan_type = _fetch(url)['channel_type']
         sch = next(iter((chan_type.values())))[0]['schedule']
         for event in sch:
             fmt = '%Y-%m-%d %H:%M:%S'
             dt = datetime.datetime.strptime(event['start'], fmt)
             sched.set_datetime(dt)
-            sched.set_title(event['name'])
-            event_id = event['id']
-            summary = cash.get(event_id)
-            if summary is None:
-                summary = _get_summary(event_id)
-                cash[event_id] = summary
-            sched.set_summary(summary)
+            title, descr = event_info.get(event)
+            sched.set_title(title)
+            sched.set_descr(descr)
         d += _daydelta
     return sched.pop()

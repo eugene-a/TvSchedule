@@ -42,7 +42,7 @@ def get_schedule(channel, tz):
             sched.set_date(date)
         else:
             sched.set_time(div[0].text)
-            h3 = div[4][-3][0]
+            h3 = div[-1][-3][0]
             if len(h3) == 0:
                 title = h3.text
             else:
@@ -50,5 +50,5 @@ def get_schedule(channel, tz):
                 title = h3[0].text
                 title = title[1: -1]
             sched.set_title(title.rstrip())
-            sched.set_summary(h3.tail)
+            sched.set_descr(h3.tail)
     return sched.pop()

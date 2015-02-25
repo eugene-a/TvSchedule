@@ -1,5 +1,5 @@
 import datetime
-
+import urllib.parse
 import pytz
 import httplib2
 import lxml.etree
@@ -21,8 +21,9 @@ _http = httplib2.Http()
 _parser = lxml.etree.HTMLParser(encoding='utf-8')
 
 
-def _fetch(path):
-    content = _http.request(_URL + path)[1]
+def _fetch(url):
+    url = urllib.parse.urljoin(_URL, url)
+    content = _http.request(url)[1]
     tv_layout = lxml.etree.fromstring(content, _parser)[1][0][4]
     if tv_layout.get('class') is not None:
         return tv_layout[0][0]   # tv-common
@@ -41,8 +42,9 @@ def get_schedule(channel, tz):
 
     for i in range(weekday_now, 7):
         sched.set_date(d)
-        path = ch_code + d.strftime('.html?date=%Y-%m-%d')
-        tv_common = _fetch(path)
+        query = {'date': d.strftime('%Y-%m-%d')}
+        url = ch_code + '.html?' + urllib.parse.urlencode(query)
+        tv_common = _fetch(url)
         if tv_common is None:
             break
 
@@ -52,9 +54,9 @@ def get_schedule(channel, tz):
             sched.set_time(row[0][0].text)
             cell = row[1]
             sched.set_title(cell[0].text)
-            summary = cell[1].text
-            if summary is not None:
-                sched.set_summary(summary)
+            descr = cell[1].text
+            if descr is not None:
+                sched.set_descr(descr)
 
         d += _daydelta
 

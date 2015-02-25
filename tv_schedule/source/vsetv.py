@@ -1,4 +1,5 @@
 import datetime
+import urllib.parse
 import lxml.etree
 import httplib2
 import pytz
@@ -23,8 +24,9 @@ _http = httplib2.Http()
 _parser = lxml.etree.HTMLParser()
 
 
-def _fetch(path):
-    content = _http.request(_URL + path, headers=_headers)[1]
+def _fetch(url):
+    url = urllib.parse.urljoin(_URL, url)
+    content = _http.request(url, headers=_headers)[1]
     return lxml.etree.fromstring(content, _parser)
 
 
@@ -32,8 +34,8 @@ def main(doc):
     return doc[3][6][3][0]
 
 
-def _get_title_and_summary(path):
-    doc = _fetch(path)
+def _get_title_and_descr(url):
+    doc = _fetch(url)
     foreign_title = False
     title = doc[0][0].text
     if title[-1] == ')':
@@ -46,36 +48,56 @@ def _get_title_and_summary(path):
     if table.get('id') is None:
         return title, foreign_title, None
 
-    summary = ''
+    descr = ''
 
     row = table[0]
 
     elem = row[0][0]
     if elem.tail is not None:
-        summary += elem.tail + '\n'
+        descr += elem.tail + '\n'
 
     elem = elem.getnext().getnext()
     if elem.tail is None:
         elem = elem.getnext()
-    summary += elem.tail.lstrip()
+    descr += elem.tail.lstrip()
 
     elem = elem.getnext()
     if elem.tag == 'strong':
-        summary += elem.text
+        descr += elem.text
 
-    summary += '\n'
+    descr += '\n'
 
     row = row.getnext()
     for elem in row[0]:
         if elem.tag == 'br':
-            summary += '\n'
+            descr += '\n'
         elif elem.tag == 'div':
-            summary += elem.findtext('span')
+            descr += elem.findtext('span')
             break
         else:
-            summary += elem.text + elem.tail
+            descr += elem.text + elem.tail
 
-    return title, foreign_title, summary
+    return title, foreign_title, descr
+
+
+class _EventInfo:
+    def __init__(self):
+        self._cash = {}
+
+    def get(self, a, quick):
+        url = a.get('href')
+        key = url[: url.find('.')]
+        title, foreign_title, descr = (
+            self._cash.get(key) or (None, False, None)
+        )
+        if title is None:
+            if quick:
+                title = a.text
+            else:
+                self._cash[key] = title, foreign_title, descr = (
+                    _get_title_and_descr(url)
+                )
+        return title, foreign_title, descr
 
 # don't load summaries for past shows
 _elapsed_limit = datetime.timedelta(hours=4)
@@ -86,11 +108,11 @@ def get_schedule(channel, tz):
     if ch_code is None:
         return []
 
-    path = 'schedule_channel_' + ch_code + '_week.html'
+    url = 'schedule_channel_' + ch_code + '_week.html'
 
     sched = schedule.Schedule(tz, _source_tz)
-    cash = {}
-    doc = _fetch(path)
+    event_info = _EventInfo()
+    doc = _fetch(url)
     for div in main(doc)[6:]:
         if div.get('class') == 'sometitle':
             date = dateutil.parse_date(div[0][0][0].text, '%A, %d %B')
@@ -109,21 +131,12 @@ def get_schedule(channel, tz):
                         )
                         sched.set_title(title)
                     else:
-                        path = a.get('href')
-                        key = path[: path.find('.')]
-                        title, foreign_title, summary = (
-                            cash.get(key) or (None, False, None)
+                        title, foreign_title, descr = (
+                            event_info.get(a, elapsed > _elapsed_limit)
                         )
-                        if title is None:
-                            if elapsed > _elapsed_limit:
-                                title = a.text
-                            else:
-                                cash[key] = title, foreign_title, summary = (
-                                    _get_title_and_summary(path)
-                                )
                         sched.set_title(title)
                         if foreign_title:
                             sched.set_foreign_title()
-                        if summary:
-                            sched.set_summary(summary)
+                        if descr:
+                            sched.set_descr(descr)
     return sched.pop()

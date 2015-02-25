@@ -12,6 +12,7 @@ def need_channel_code():
 
 _source_tz = pytz.timezone('Europe/Moscow')
 _URL = 'http://eurokino.tv/schedule_ajax_helper.php'
+_headers = {'Content-Type': 'application/x-www-form-urlencoded'}
 
 _daydelta = datetime.timedelta(1)
 
@@ -26,7 +27,6 @@ def get_schedule(channel, tz):
     today = dateutil.tv_date_now(_source_tz)
     weekday_now = today.weekday()
 
-    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
     sched = schedule.Schedule(tz, _source_tz)
 
     d = today
@@ -34,12 +34,12 @@ def get_schedule(channel, tz):
         sched.set_date(d)
         body = urllib.parse.urlencode({'d': d.strftime("%Y%m%d")})
 
-        content = _http.request(_URL, 'POST', body, headers)[1]
+        content = _http.request(_URL, 'POST', body, _headers)[1]
         doc = lxml.etree.fromstring(content, _parser)
         for event in doc[0][0]:
             sched.set_time(event[0].text)
             title = event[1][0].text
-            summary = ''
+            descr = ''
             table = event[2][0][1][0][0]
             for row in table:
                 field = row[0].text
@@ -49,10 +49,10 @@ def get_schedule(channel, tz):
                     title = value
                 else:
                     if field in ('режиссер', 'в ролях'):
-                        summary += field + ': '
-                    summary += value + '\n'
-            summary += table.getnext().text
+                        descr += field + ': '
+                    descr += value + '\n'
+            descr += table.getnext().text
             sched.set_title(title)
-            sched.set_summary(summary)
+            sched.set_descr(descr)
         d += _daydelta
     return sched.pop()

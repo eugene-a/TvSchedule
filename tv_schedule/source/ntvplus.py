@@ -2,7 +2,7 @@ import datetime
 import urllib.parse
 import pytz
 import httplib2
-import lxml.html
+import lxml.etree
 from tv_schedule import dateutil, schedule
 
 
@@ -14,9 +14,7 @@ channel_code = None
 _source_tz = pytz.timezone('Europe/Moscow')
 _daydelta = datetime.timedelta(1)
 
-_URL = 'http://tv.akado.ru/channels/'
-
-_parser = lxml.etree.HTMLParser(encoding='utf-8')
+_parser = lxml.etree.HTMLParser()
 
 
 _URL = 'http://www.ntvplus.ru'
@@ -26,8 +24,9 @@ _http = httplib2.Http()
 
 
 def _fetch(url):
-    content = _http.request(_URL + url)[1]
-    doc = lxml.html.fromstring(content)
+    url = urllib.parse.urljoin(_URL, url)
+    content = _http.request(url)[1]
+    doc = lxml.etree.fromstring(content, _parser)
     return doc[1][5][0][4][0][0]
 
 
@@ -44,7 +43,7 @@ def _parse_infoitem(li):
     return text[:colidx], text[colidx + 2:]
 
 
-def _get_title_and_summary(url):
+def _get_title_and_descr(url):
     item = _fetch(url)
     title = item[1].text
     summary = ''
@@ -59,33 +58,41 @@ def _get_title_and_summary(url):
     return title, summary + item[5].text
 
 
-def _get_column(data, sched, cash, col):
-    for clearfix in filter(lambda x: len(x[col]) > 0, data):
-        event = clearfix[col][0]
+class _EventInfo:
+    def __init__(self):
+        self._cash = {}
+
+    def get(self, h5):
+        href = h5[0].get('href')
+        query = urllib.parse.urlparse(href).query
+        key = int(urllib.parse.parse_qs(query)['id'][0])
+        title, descr = self._cash.get(key) or (None, None)
+        if title is None:
+            self._cash[key] = title, descr = _get_title_and_descr(href)
+        return title, descr
+
+
+def _get_column(data, sched, event_info, col):
+    for event in (x[col][0] for x in data if len(x[col]) > 0):
         sched.set_time(event[0].text)
         h5 = event[1][0]
         if h5.tag != 'h5':
             h5 = h5.getnext()
-        if len(h5) == 0:
+        if len(h5) > 0:
+            title, descr = event_info.get(h5)
+            sched.set_foreign_title()
+        else:
             title = h5.text
-            summary = h5.tail
-            if summary:
-                ts = (title + ' ' + summary).split(' - ', 1)
+            descr = h5.tail
+            if descr:
+                ts = (title + ' ' + descr).split(' - ', 1)
                 if len(ts) < 2:
                     ts.append(None)
-                title, summary = ts
-        else:
-            href = h5[0].get('href')
-            query = urllib.parse.urlparse(href).query
-            key = urllib.parse.parse_qs(query)['id'][0]
-            title, summary = cash.get(key) or (None, None)
-            if title is None:
-                cash[id] = title, summary = _get_title_and_summary(href)
-            sched.set_foreign_title()
+                title, descr = ts
 
         sched.set_title(title)
-        if summary:
-            sched.set_summary(summary)
+        if descr:
+            sched.set_descr(descr)
 
 
 def get_schedule(channel, tz):
@@ -93,7 +100,8 @@ def get_schedule(channel, tz):
     if ch_code is None:
         return []
 
-    cash = {}
+    event_info = _EventInfo()
+
     today = dateutil.tv_date_now(_source_tz)
     weekday_now = today.weekday()
     sched = schedule.Schedule(tz, _source_tz)
@@ -104,8 +112,8 @@ def get_schedule(channel, tz):
         sched.set_date(d)
         arg['day'] = d.strftime('%d.%m.%Y')
         url = _CHAN_URL + urllib.parse.urlencode(arg)
-        data = _fetch(url).get_element_by_id('tvguide')[0]
+        tvguide = next(x for x in _fetch(url) if x.get('id') == 'tvguide')
         for col in range(2):
-            _get_column(data, sched, cash, col)
+            _get_column(tvguide[0], sched, event_info, col)
         d += _daydelta
     return sched.pop()
