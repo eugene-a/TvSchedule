@@ -1,8 +1,6 @@
 import datetime
 import re
-import itertools
 import urllib.parse
-import operator
 import pytz
 import httplib2
 import lxml.etree

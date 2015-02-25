@@ -1,8 +1,4 @@
 import datetime
-import urllib.parse
-import functools
-import operator
-import json
 import pytz
 import httplib2
 import lxml.etree
@@ -36,7 +32,7 @@ def get_schedule(channel, tz):
         content = _http.request(url)[1]
         doc = lxml.etree.fromstring(content, _parser)
         inner = doc[2][8][0][0][2][0][0][0][0][0][1][0]
-        
+
         for event in (x for x in inner[2:] if len(x) > 1):
             sched.set_time(event[0].text)
             info = event[1]
