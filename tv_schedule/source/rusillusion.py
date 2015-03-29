@@ -11,7 +11,7 @@ def need_channel_code():
 
 _source_tz = pytz.timezone('Europe/Moscow')
 _URL = 'http://russkiyillusion.ru'
-_PROG_URL = '/schedule_ajax_helper.php'
+_SCHED_URL = '/schedule_ajax_helper.php'
 _headers = {'Content-Type': 'application/x-www-form-urlencoded'}
 
 _http = httplib2.Http()
@@ -55,11 +55,11 @@ def get_schedule(channel, tz):
 
     descriptions = _Descriptions()
 
-    today = dateutil.tv_date_now(_source_tz, 6)
+    today = dateutil.tv_date_now(_source_tz)
     weekday_now = today.weekday()
     sched = schedule.Schedule(tz, _source_tz)
 
-    url = urllib.parse.urljoin(_URL, _PROG_URL)
+    url = urllib.parse.urljoin(_URL, _SCHED_URL)
 
     d = today
     for i in range(weekday_now, 7):

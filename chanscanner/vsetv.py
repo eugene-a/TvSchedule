@@ -18,7 +18,7 @@ parser = lxml.etree.HTMLParser()
 cp866.encoding_map[ord('і')] = cp866.encoding_map[ord('i')]
 
 with open(os.path.join(config.output_dir(), 'vsetv.txt'), 'w') as f:
-    for i in range(1, 1019):
+    for i in range(1, 1023):
         url = URL.format(i)
         content = http.request(url, headers=hdrs)[1]
         doc = lxml.etree.fromstring(content, parser)

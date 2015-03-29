@@ -11,6 +11,9 @@ import tzlocal
 
 from tv_schedule import config, source_import, dateutil
 
+_CITYCAT = 'tv.all\n'
+_KULICHKI = 'andgon\n'
+
 
 def _title_score(event):
     title = event.title
@@ -90,9 +93,8 @@ class _ScheduleWriter:
         self._f_prog = f_prog
         self._f_sum = f_sum
 
-        schedule_header = 'tv.all\n'
-        self._f_prog.write(schedule_header)
-        self._f_sum.write(schedule_header)
+        self._f_prog.write(_CITYCAT)
+        self._f_sum.write(_KULICHKI)
 
         self._tz = tzlocal.get_localzone()
 

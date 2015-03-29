@@ -1,7 +1,5 @@
 import datetime
 import urllib.parse
-import operator
-import functools
 import itertools
 import pytz
 import httplib2
@@ -34,10 +32,7 @@ def _fetch(url):
 
 
 def _get_text(elem):
-    return functools.reduce(
-        operator.add, (x.text_content() + '\n'
-                       for x in elem.iterchildren('div'))
-    )
+    return '\n'.join(x.text_content() for x in elem.iterchildren('div'))
 
 
 def _get_descr(url):
@@ -68,7 +63,7 @@ def get_schedule(channel, tz):
     if _URL is None:
         return []
 
-    today = dateutil.tv_date_now(_source_tz, 6)
+    today = dateutil.tv_date_now(_source_tz)
     weekday_now = today.weekday()
     sched = schedule.Schedule(tz, pytz.timezone('UTC'))
 
@@ -84,10 +79,13 @@ def get_schedule(channel, tz):
             t1 = next(x for x in dd.iterchildren()
                       if x.get('class') != 'tv-preview')
             t2 = t1.getnext()
-            sched.set_title(t1.text + ' ' + t2.text)
-            t3 = next(t2.itersiblings('div'), None)
-            descr = t3.text + '\n' if t3 is not None else ''
-            descr += descriptions.get(t2) or ''
-            sched.set_descr(descr)
+            if t2 is None:
+                sched.set_title(t1.text)
+            else:
+                sched.set_title(t1.text + ' ' + t2.text)
+                t3 = next(t2.itersiblings('div'), None)
+                descr = t3.text + '\n' if t3 is not None else ''
+                descr += descriptions.get(t2) or ''
+                sched.set_descr(descr)
         d += _daydelta
     return sched.pop()

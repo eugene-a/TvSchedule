@@ -2,10 +2,6 @@ import datetime
 from tv_schedule import env
 
 
-def genitive_month(s):
-    return s + 'а' if s[-1] == 'т' else s[: -1] + 'я'
-
-
 # convert abbreviated month
 def _win2linux_month(month):
     month_map = {
@@ -24,14 +20,6 @@ if env.windows():
 else:
     def fromwin(s):
         return s[:2] + '.' + s[2:-3] + _win2linux_month(s[-3:])
-
-
-def _nominative_month(s):
-    s = s[: -1]
-    last = s[-1]
-    if last != 'т':
-        s += ('й' if last == 'а' else 'ь')
-    return s
 
 
 # month as an integer and year as a string with a leading space
@@ -53,11 +41,23 @@ def _fixyear(d):
     return d
 
 
+def genitive_month(s):
+    return s + 'а' if s[-1] == 'т' else s[: -1] + 'я'
+
+
+def nominative_month(s):
+    s = s[: -1]
+    last = s[-1]
+    if last != 'т':
+        s += ('й' if last == 'а' else 'ь')
+    return s
+
+
 # parse a date string with no year information
 # assuming proximity to the current date
 def parse_date(s, format):
     if format[-1] == 'B':
-        s = _nominative_month(s)
+        s = nominative_month(s)
     #  initially assume the current year
     dt = datetime.datetime.strptime(s + _year, format + ' %Y')
     return _fixyear(dt.date())
@@ -65,7 +65,7 @@ def parse_date(s, format):
 
 # TV programs for a day usually begin in the morning
 # and end in the  morning of the next day.
-def tv_date_now(tz, hours=5, minutes=0):
+def tv_date_now(tz, hours=6, minutes=0):
     now = datetime.datetime.now(tz)
     shift = datetime.timedelta(hours=hours, minutes=minutes)
     return (now - shift).date()

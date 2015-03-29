@@ -10,7 +10,7 @@ def need_channel_code():
     return False
 
 _URL = 'http://www.ntv.ru'
-_URL_PROG = '/rest/currsched.jsp?'
+_SCHED_URL = '/rest/currsched.jsp?'
 
 _source_tz = pytz.timezone('Europe/Moscow')
 _daydelta = datetime.timedelta(1)
@@ -27,9 +27,8 @@ def _fetch(url):
 
 
 def _get_descr(url):
-    doc = _fetch(url)
-    cleft = doc[1][21][0][0][1]
-    abt = next(x for x in cleft.iterchildren() if x.get('id') == 'abt')
+    c_left = _fetch(url)[1][21][0][0][0]
+    abt = next(x for x in c_left if x.get('id') == 'abt')
     return abt[1].text_content()
 
 
@@ -40,7 +39,7 @@ class _Descriptions:
     def get(self, a):
         href = a.get('href')
         path = urllib.parse.urlsplit(href).path
-        key = path.split('/')[-2]
+        key = path.split('/')[2]
         descr = self._cash.get(key)
         if descr is None:
             self._cash[key] = descr = _get_descr(href)
@@ -62,7 +61,7 @@ def get_schedule(channel, tz):
     for i in range(weekday_now, 7):
         sched.set_date(d)
         query = {'d': d.strftime('%Y%m%d')}
-        tbs = _fetch(_URL_PROG + urllib.parse.urlencode(query))
+        tbs = _fetch(_SCHED_URL + urllib.parse.urlencode(query))
         for dt in tbs[1][::2]:
             dd = dt.getnext()
             if len(dt) > 0:

@@ -1,7 +1,5 @@
 import datetime
 import urllib.parse
-import operator
-import functools
 import pytz
 import httplib2
 import lxml.html
@@ -28,18 +26,16 @@ def _fetch(url):
 
 
 def _get_text(elem):
-    return functools.reduce(
-        operator.add, (x.text_content() + '\n'
-                       for x in elem if x.get('class') is None),
-        ''
-    )
+    return '\n'.join(x.text_content() for x in elem if x.get('class') is None)
 
 
 def _get_descr(url):
     doc = _fetch(url)
     if doc is not None:
-        details = doc[1]
-        return _get_text(details[0][1]) + _get_text(details[1])
+        det = doc[1]
+        if det.tag == 'div':
+            return _get_text(det[0][1]) + _get_text(det[1])
+    return ''
 
 
 class _Descriptions:
@@ -73,9 +69,14 @@ def get_schedule(channel, tz):
         for li in _fetch(url)[3][0]:
             sched.set_time(li[0].text)
             a = li[1]
-            sched.set_title(a.text)
-            descr = descriptions.get(a)
-            if descr:
-                sched.set_descr(descr)
+            if a.tag == 'a':
+                sched.set_title(a.text)
+                descr = descriptions.get(a)
+                if descr:
+                    sched.set_descr(descr)
+            elif len(a) == 0:
+                sched.set_title(a.text)
+            else:
+                sched.set_title(a[0].text)
         d += _daydelta
     return sched.pop()

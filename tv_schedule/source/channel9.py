@@ -20,11 +20,12 @@ def get_schedule(channel, tz):
     sched = schedule.Schedule(tz, _source_tz)
 
     etree = lxml.etree.parse(_URL, _parser)
-    content = etree.getroot()[2][8][0][4][0][0][4]
+    doc = etree.getroot()
+    content = doc[2][7][3][0][4][0][0][4]
     for tv_program in content[4: 11]:
-        date_str = tv_program.get('id')[-8:]
-        d = datetime.datetime.strptime(date_str, '%Y%m%d').date()
-        sched.set_date(d)
+        prog_id = tv_program.get('id')
+        dt = datetime.datetime.strptime(prog_id, 'tv_programm_%Y%m%d')
+        sched.set_date(dt.date())
         for li in tv_program[0]:
             span = li[0]
             sched.set_time(span.text)

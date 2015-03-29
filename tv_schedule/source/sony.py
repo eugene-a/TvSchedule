@@ -1,7 +1,5 @@
 import datetime
 import urllib.parse
-import functools
-import operator
 import itertools
 import pytz
 import httplib2
@@ -13,7 +11,7 @@ def need_channel_code():
     return False
 
 _URL = None
-_PROG_URL = '/programma/ajax/{}/data/listings/%Y/%m/%d'
+_SCHED_URL = '/programma/ajax/{}/data/listings/%Y/%m/%d'
 
 _channels = {
     'SET': ('http://www.set-russia.com', 'ru'),
@@ -32,9 +30,7 @@ def _get_descr(url):
     doc = lxml.etree.fromstring(content, _parser)
     sb_site = next(itertools.islice(doc[2].iterchildren('div'), 1, 2))
     cont = sb_site[0][2][0][0][0][0][0][2][0][0][1]
-    return functools.reduce(
-        operator.add, (x.text + '\n' if x.text else '' for x in cont)
-    )
+    return '\n'.join(x.text or '' for x in cont)
 
 
 class _Descriptions:
@@ -56,9 +52,9 @@ def get_schedule(channel, tz):
     if _URL is None:
         return []
 
-    prog_url = _PROG_URL.format(ru)
+    prog_url = _SCHED_URL.format(ru)
 
-    today = dateutil.tv_date_now(_source_tz, 6)
+    today = dateutil.tv_date_now(_source_tz)
     weekday_now = today.weekday()
     sched = schedule.Schedule(tz, _source_tz)
 
@@ -72,12 +68,16 @@ def get_schedule(channel, tz):
         content = _http.request(url)[1]
         doc = lxml.etree.fromstring(content, _parser)
         for li in (x for x in doc[0][0] if len(x) > 0):
-            sched.set_time(li[0][0].text)
+            sched.set_time(li[0][1].text)
             cont = li[2]
-            a = cont[0][0]
-            sched.set_title(a.text)
-            descr = (cont[1].text + '\n' + cont[2].text + '\n' +
-                     descriptions.get(a))
-            sched.set_descr(descr)
+            title = cont[0]
+            if len(title) == 0:
+                sched.set_title(title.text)
+            else:
+                a = title[0]
+                sched.set_title(a.text)
+                descr = (cont[1].text + '\n' + cont[2].text + '\n' +
+                         descriptions.get(a))
+                sched.set_descr(descr)
         d += _daydelta
     return sched.pop()

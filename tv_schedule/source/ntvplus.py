@@ -46,16 +46,16 @@ def _parse_infoitem(li):
 def _get_title_and_descr(url):
     item = _fetch(url)
     title = item[1].text
-    summary = ''
+    descr = ''
     for li in item[3]:
         field, value = _parse_infoitem(li)
         if field == 'Оригинальное название':
             title = value
         else:
             if field in ('Рейтинг', 'Режиссер', 'В ролях'):
-                summary += field + ': '
-            summary += value + '\n'
-    return title, summary + item[5].text
+                descr += field + ': '
+            descr += value + '\n'
+    return title, descr + item[5].text
 
 
 class _EventInfo:

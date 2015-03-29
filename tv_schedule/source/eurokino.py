@@ -43,7 +43,7 @@ def get_schedule(channel, tz):
             table = event[2][0][1][0][0]
             for row in table:
                 field = row[0].text
-                value = row[1][0].text
+                value = row[1][0].text or ''
                 if field == 'ориг.':
                     sched.set_foreign_title()
                     title = value

@@ -1,8 +1,6 @@
 import datetime
 import itertools
 import urllib.parse
-import operator
-import functools
 import pytz
 import httplib2
 import lxml.html
@@ -13,7 +11,7 @@ def need_channel_code():
     return False
 
 _URL = 'http://ren.tv'
-_PROG_URL = '/tv-programma'
+_SCHED_URL = '/tv-programma'
 
 _source_tz = pytz.timezone('Europe/Moscow')
 _daydelta = datetime.timedelta(1)
@@ -25,23 +23,14 @@ def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
     content = _http.request(url)[1]
     doc = lxml.html.fromstring(content)
-    return doc[2][8][0][2][0][1][0][1][0][0]
-
-
-def _get_text(elem):
-    return functools.reduce(
-        operator.add, (x.text_content() + '\n' for x in elem)
-    )
+    return doc[2][5][0][2][0][1][0][1][1][0]
 
 
 def _get_descr(url):
     section = next(
         itertools.islice(_fetch(url).iterchildren('section'), 1, None)
     )
-    return functools.reduce(
-        operator.add, (x.text_content() + '\n' for x in section.iter('p')),
-        ''
-    )
+    return '\n'.join(x.text_content() for x in section.iter('p'))
 
 
 class _Descriptions:
@@ -65,7 +54,7 @@ def get_schedule(channel, tz):
     sched = schedule.Schedule(tz, _source_tz)
     descriptions = _Descriptions()
 
-    for date_raw in _fetch(_PROG_URL)[3][0][0][1]:
+    for date_raw in _fetch(_SCHED_URL)[3][0][0][1]:
         div = date_raw[0][0][0]
         date = div.text + ' ' + div.tail
         sched.set_date(dateutil.parse_date(date, '%a %d %B'))

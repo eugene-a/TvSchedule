@@ -34,7 +34,7 @@ def get_schedule(channel, tz):
     if ch_code is None:
         return []
 
-    today = dateutil.tv_date_now(_source_tz)
+    today = dateutil.tv_date_now(_source_tz, 5)
     weekday_now = today.weekday()
 
     sched = schedule.Schedule(tz, _source_tz)

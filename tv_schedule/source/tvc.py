@@ -11,7 +11,7 @@ def need_channel_code():
     return False
 
 _URL = 'http://www.tvc.ru/'
-_PROG_URL = '/tvp/index/date/%d-%m-%Y'
+_SCHED_URL = '/tvp/index/date/%d-%m-%Y'
 
 _http = httplib2.Http()
 _source_tz = pytz.timezone('Europe/Moscow')
@@ -24,7 +24,7 @@ def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
     content = _http.request(url)[1]
     doc = lxml.html.fromstring(content, parser=_parser)
-    page_wrap = doc[1][10]
+    page_wrap = doc[1][8]
     return next(itertools.islice(page_wrap.iterchildren('div'), 1, 2))
 
 
@@ -56,7 +56,7 @@ def get_schedule(channel, tz):
     if channel != 'ТВ Центр':
         return []
 
-    today = dateutil.tv_date_now(_source_tz, 6)
+    today = dateutil.tv_date_now(_source_tz)
     weekday_now = today.weekday()
     sched = schedule.Schedule(tz, _source_tz)
 
@@ -65,7 +65,7 @@ def get_schedule(channel, tz):
     d = today
     for i in range(weekday_now, 7):
         sched.set_date(d)
-        for li in _fetch(d.strftime(_PROG_URL))[0][12]:
+        for li in _fetch(d.strftime(_SCHED_URL))[0][12]:
             a = li[0]
             t = next(x for x in a.iterchildren('div')
                      if x.get('class') == 'b-schedule__item__title')

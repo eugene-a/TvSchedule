@@ -24,10 +24,10 @@ def get_schedule(channel, tz):
 
     sched = schedule.Schedule(tz, _source_tz)
 
-    today = dateutil.tv_date_now(_source_tz, 6)
+    today = dateutil.tv_date_now(_source_tz)
     weekday_now = today.weekday()
     sched = schedule.Schedule(tz, _source_tz)
-    rex = re.compile('([0-9]+\+ )([^\.«»]*(?:«.+»)?[^\.«»]*\.?)(.*)')
+    rex = re.compile('([0-9]+\+ )?([^\.«»]*(?:«.+»)?[^\.«»]*\.?)(.*)')
 
     d = today
     for i in range(weekday_now, 7):
@@ -41,6 +41,6 @@ def get_schedule(channel, tz):
             m = rex.match(row[1].text)
             age, title, descr = m.groups()
             sched.set_title(title)
-            sched.set_descr(age + descr)
+            sched.set_descr((age or '') + descr)
         d += _daydelta
     return sched.pop()

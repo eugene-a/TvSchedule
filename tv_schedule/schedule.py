@@ -37,8 +37,10 @@ class Schedule:
         self._source_date = d
         self._source_hour = 0
 
-    def set_time(self, t):
+    def set_time(self, t, pm=False):
         hour, minute = (int(s) for s in t.split(':')[:2])
+        if pm:
+            hour += 12
         if hour < self._source_hour:
             self._source_date += _daydelta
         self._source_hour = hour

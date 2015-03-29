@@ -56,9 +56,9 @@ class _Descriptions:
 
     def get(self, a):
         url = a.get('href')
-        path = urllib.parse.urlsplit(url).path
-        if path != '/':
-            key = int(path.split('/')[-1])
+        # make sure it's a relative url
+        if urllib.parse.urlsplit(url).scheme == '':
+            key = int(url[url.rindex('/') + 1:])
             descr = self._cash.get(key)
             if descr is None:
                 self._cash[key] = descr = _get_descr(url)

@@ -1,7 +1,5 @@
 import datetime
 import urllib.parse
-import operator
-import functools
 import pytz
 import httplib2
 import lxml.html
@@ -36,9 +34,7 @@ def _fetch(url):
 
 
 def _get_text(elem):
-    return functools.reduce(
-        operator.add, (x.text_content() + '\n' for x in elem.iter('p'))
-    )
+    return '\n'.join(x.text_content() for x in elem.iter('p'))
 
 
 def _get_child_by_class(elem, cls):
@@ -80,7 +76,7 @@ def get_schedule(channel, tz):
     if _URL is None:
         return []
 
-    today = dateutil.tv_date_now(_source_tz)
+    today = dateutil.tv_date_now(_source_tz, 5)
     weekday_now = today.weekday()
     sched = schedule.Schedule(tz, _source_tz)
     descriptions = _Descriptions()

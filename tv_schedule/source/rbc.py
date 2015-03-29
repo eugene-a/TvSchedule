@@ -41,10 +41,6 @@ def get_schedule(channel, tz):
             a = ev[0]
             if title is None:
                 title = a.text
-                a = a.getnext()
             sched.set_title(title)
-            descr = a[0][0][0].text
-            if descr:
-                sched.set_descr(descr)
         d += _daydelta
     return sched.pop()

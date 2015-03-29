@@ -1,6 +1,4 @@
 import urllib.parse
-import operator
-import functools
 import pytz
 import httplib2
 import lxml.html
@@ -11,7 +9,7 @@ def need_channel_code():
     return False
 
 _URL = 'http://www.otr-online.ru'
-_PROG_URL = 'teleprogramma'
+_SCHED_URL = 'teleprogramma'
 
 _source_tz = pytz.timezone('Europe/Moscow')
 
@@ -23,7 +21,7 @@ def _fetch(url):
     content = _http.request(url)[1]
     doc = lxml.html.fromstring(content)
     container = next(x for x in doc[1] if x.get('class') == 'conteiner')
-    return container[9]
+    return container[14]
 
 
 def _get_id(url):
@@ -44,11 +42,7 @@ def _get_descr(url):
         None
         )
     if div is not None:
-        return functools.reduce(
-            operator.add,
-            (x.text or '' for x in div[1].iterchildren('p')),
-            ''
-        )
+        return '\n'.join(x.text or '' for x in div[1].iterchildren('p'))
 
 
 class _Descriptions:
@@ -57,7 +51,7 @@ class _Descriptions:
 
     def get(self, a):
         href = a.get('href')
-        if href:
+        if href and not href.endswith('news/'):
             key = _get_id(href)
             descr = self._cash.get(key)
             if descr is None:
@@ -72,7 +66,7 @@ def get_schedule(channel, tz):
     sched = schedule.Schedule(tz, _source_tz)
     descriptions = _Descriptions()
 
-    for tab in _fetch(_PROG_URL)[2:9]:
+    for tab in _fetch(_SCHED_URL)[2:9]:
         d = dateutil.parse_date(tab.get('id'), 'tab_%d_%m')
         sched.set_date(d)
 

@@ -1,6 +1,4 @@
 import itertools
-import functools
-import operator
 import pytz
 import httplib2
 import lxml.etree
@@ -25,8 +23,7 @@ def _fetch(url):
 
 def _get_descr(url):
     text = _fetch(url)[0][0][2][0][1][-2]
-    return functools.reduce(
-        operator.add, (x.text + '\n' if x.text else '' for x in text), '')
+    return '\n'.join(x.text or '' for x in text)
 
 
 class _Descriptions:
@@ -34,8 +31,11 @@ class _Descriptions:
         self._cash = {}
 
     def get(self, tooltip):
+        if len(tooltip) == 0:
+            return ''
+
         href = tooltip[0][0][-1][0].get('href')
-        key = href[href[: -1].rindex('/') + 1: -1]
+        key = href[href.rindex('/', 0, -1) + 1: -1]
         descr = self._cash.get(key)
         if descr is None:
             self._cash[key] = descr = _get_descr(href)

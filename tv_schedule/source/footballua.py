@@ -26,7 +26,7 @@ def get_schedule(channel, tz):
 
     url = _URL.format(channel[-1])
 
-    today = dateutil.tv_date_now(_source_tz, 6)
+    today = dateutil.tv_date_now(_source_tz)
     weekday_now = today.weekday()
     sched = schedule.Schedule(tz, _source_tz)
 
@@ -38,8 +38,13 @@ def get_schedule(channel, tz):
         for row in doc[0][0][0][::2]:
             table = row[0][0]
             tr = table[0]
-            sched.set_time(tr[0][0][0].text)
-            sched.set_title(tr[1][0][0][0].text)
-            sched.set_descr(table[2][0][0][0].text)
+            title = tr[1][0][0][0].text
+            descr = table[2][0][0][0].text
+            if descr and not title:
+                title, descr = descr.split('.', 1)
+            if title:
+                sched.set_time(tr[0][0][0].text)
+                sched.set_title(title)
+                sched.set_descr(descr)
         d += _daydelta
     return sched.pop()

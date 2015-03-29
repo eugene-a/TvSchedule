@@ -20,7 +20,7 @@ def get_schedule(channel, tz):
     if channel != 'Universal Channel':
         return []
 
-    today = dateutil.tv_date_now(_source_tz, 6)
+    today = dateutil.tv_date_now(_source_tz)
     weekday_now = today.weekday()
     sched = schedule.Schedule(tz, _source_tz)
 
@@ -31,7 +31,8 @@ def get_schedule(channel, tz):
         url = d.strftime(_URL)
         content = _http.request(url)[1]
         doc = lxml.etree.fromstring(content, _parser)
-        inner = doc[2][8][0][0][2][0][0][0][0][0][1][0]
+        zoo = doc[2][8]
+        inner = doc[2][7][0][0][2][0][0][0][0][0][1][0]
 
         for event in (x for x in inner[2:] if len(x) > 1):
             sched.set_time(event[0].text)

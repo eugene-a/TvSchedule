@@ -30,7 +30,7 @@ def get_schedule(channel, tz):
 
     sched = schedule.Schedule(tz, _source_tz)
 
-    today = dateutil.tv_date_now(_source_tz, 6)
+    today = dateutil.tv_date_now(_source_tz)
     body = urllib.parse.urlencode({
         'action': 'get_shedule_list',
         'dey': today.strftime('%Y-%m-%d')
