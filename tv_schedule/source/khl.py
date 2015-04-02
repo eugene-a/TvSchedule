@@ -2,7 +2,7 @@ import datetime
 import pytz
 import httplib2
 import lxml.etree
-from tv_schedule import schedule
+from tv_schedule import schedule, dateutil
 
 
 def need_channel_code():
@@ -24,7 +24,9 @@ def get_schedule(channel, tz):
     doc = lxml.etree.fromstring(content, _parser)
     channel = doc[1][6][2][0][2][1]
     for item, progs in zip(channel[2][0], channel[4]):
-        d = datetime.datetime.strptime(item[0][0].text, '%a %d.%m.%y')
+        fmt = '%a %d.%m.%y'
+        s = dateutil.fromwin(item[0][0].text, fmt)
+        d = datetime.datetime.strptime(s, fmt)
         sched.set_date(d)
         for prog in progs:
             it = prog.iterchildren()

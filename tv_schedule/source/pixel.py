@@ -27,7 +27,8 @@ _implicit_fields = ['Оригінальна назва', 'Виробництво
 def _fetch(url):
     content = _http.request(url)[1]
     doc = lxml.etree.fromstring(content, _parser)
-    return doc[1][10][1]
+    wrapper = next(doc[1].iterchildren('div', reversed=True))
+    return wrapper[1]
 
 
 def _get_title_and_descr(url):

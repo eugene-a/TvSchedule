@@ -27,8 +27,8 @@ def get_schedule(channel, tz):
     for i in range(weekday_now, 7):
         content = _http.request(d.strftime(_URL))[1]
         doc = lxml.html.fromstring(content)
-        stacked = doc[1][8][3][0][0][0][3]
-        for part in stacked[1::2]:
+        layout = next(x for x in doc[1] if x.get('class') == 'layout')
+        for part in layout[3][0][0][0][3][1::2]:
             for article in part.iterchildren('article'):
                 dt_str = article[-3][0].get('datetime')
                 dt = datetime.datetime.strptime(dt_str, '%Y-%m-%d %H:%M:%S')
