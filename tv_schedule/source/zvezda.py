@@ -30,7 +30,7 @@ def _get_descr(url):
     if len(cell) > 0:
         p = cell[0]
         if p.tag == 'p':
-            return (p.text or '') + '/n'.join(x.tail or '' for x in p)
+            return (p.text or '') + '\n'.join(x.tail or '' for x in p)
 
 
 def _get_leaf(a):

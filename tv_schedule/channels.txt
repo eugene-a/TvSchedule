@@ -34,7 +34,6 @@
 36. Спорт 1 (Россия)
 37. Extreme Sports Channel
 38. М2
-41. Viasat Sport
 43. Футбол 1
 44. TV1000 East
 45. Дом кино
@@ -55,7 +54,6 @@
 64. Nat Geo Wild
 66. FOX
 67. Еспресо TV
-68. Nat Geo Wild
 69. Viasat Nature
 70. Viasat Explore
 71. Viasat History
@@ -76,7 +74,7 @@
 91. 1+1
 92. КХЛ ТВ
 93. RTVi
-94. Пиксель
+94. Піксель
 95. Оружие
 96. Da Vinci Learning
 97. Disney Channel
@@ -119,12 +117,11 @@
 138. НТВ-ПЛЮС Спорт
 139. НТВ-ПЛЮС Футбол 2
 140. Много ТВ
-141. Boomerang
 142. Индия ТВ
 143. RU.TV
 144. 365 дней ТВ
 145. Disney XD
-146. 2х2
+146. 2x2
 148. Ю
 149. Телепутешествия
 150. Охотник и рыболов

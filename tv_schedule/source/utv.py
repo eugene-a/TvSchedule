@@ -31,7 +31,10 @@ def get_schedule(channel, tz):
         url = _URL + urllib.parse.urlencode(query)
         content = _http.request(url)[1]
         doc = lxml.etree.fromstring(content, _parser)
-        for event in doc[1][6][0][0][0][7][4][0][0][0][1][1: -1]:
+        wrapper = doc[1][6][0][0][0][7]
+        if wrapper.tag != 'div':
+            wrapper = wrapper.getnext()
+        for event in wrapper[4][0][0][0][1][1: -1]:
             it = event.iterchildren()
             sched.set_time(next(it).text)
             next(it)

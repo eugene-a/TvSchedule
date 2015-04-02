@@ -34,9 +34,13 @@ def get_schedule(channel, tz):
         programs = sch['programs']
         for event in sch['seances']:
             sched.set_time(event['time'])
-            program = programs[str(event['programId'])]
-            sched.set_title(program['title'])
-            descr = lxml.html.fromstring(program['description'])
-            sched.set_descr(descr.text_content())
+            try:
+                program = programs[str(event['programId'])]
+            except KeyError:
+                sched.set_title(event['title'])
+            else:
+                sched.set_title(program['title'])
+                descr = lxml.html.fromstring(program['description'])
+                sched.set_descr(descr.text_content())
         d += _daydelta
     return sched.pop()

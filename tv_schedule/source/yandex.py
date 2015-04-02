@@ -22,7 +22,7 @@ _parser = lxml.etree.HTMLParser(encoding='utf-8')
 
 _daydelta = datetime.timedelta(1)
 
-_RETRY_COUNT = 3
+_RETRY_COUNT = 5
 
 
 def _fetch(url):
@@ -66,7 +66,7 @@ class _EventInfo:
         self._cash = {}
 
     def get(self, a):
-        title = a[1].text
+        title = a[1].text or a[1][0].text
         descr = self._cash.get(title)
         if descr is None:
             self._cash[title] = descr = get_descr(a)

@@ -37,7 +37,6 @@ def get_schedule(channel, tz):
         elif new_date:
             new_date = False
             date_str = div[0][0][1][0].text
-            date_str = dateutil.fromwin(date_str)
             date = dateutil.parse_date(date_str, '%a, %d. %b')
             sched.set_date(date)
         else:

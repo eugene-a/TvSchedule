@@ -23,7 +23,9 @@ def _fetch(url):
 
 
 def _get_descr(url):
-    return _fetch(url)[0][4].text
+    title = next(_fetch(url).iterchildren('div'))[0]
+    return (title.tail or '') + '\n'.join(x.text or ''
+                                          for x in title.itersiblings('p'))
 
 
 class _Descriptions:
@@ -56,7 +58,7 @@ def get_schedule(channel, tz):
             if len(span) < 2:
                 sched.set_title(span.text.lstrip())
             else:
-                a = span[0]
+                a = next(span.iterchildren('a', reversed=True))
                 sched.set_title(a.text)
                 sched.set_descr(descriptions.get(a))
 

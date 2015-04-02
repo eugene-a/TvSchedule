@@ -1,5 +1,5 @@
 default:
-  [!src vsetv, !src yandex, !src ntvplus]
+  [!src vsetv, !src ntvplus]
 special:
   - [!src russia, [Россия, Россия 2, Культура]]
   - [!src ntv, [НТВ]]
@@ -50,6 +50,10 @@ special:
   - [!src days365, [365 дней ТВ]]
   - [!src 2x2, [2x2]]
   - [!src utv, [Ю]]
+  - [!src tv_lv, [Euronews, VH1, Eurosport, Eurosport 2, TV1000 East,
+        TV1000 Action East, CNBC, Fox Life, FOX, Viasat Nature, Viasat Explore,
+        Viasat History, Cartoon Network, Boomerang, CNN, TV1000 Premium,
+        BBC World News, Disney XD]]
   - [!src 1tvch, [Телепутешествия, Охотник и рыболов]]
   - [!src jv, [ЖИВИ!]]
   - [!src zvezda, [Звезда]]

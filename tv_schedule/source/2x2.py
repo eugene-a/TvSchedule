@@ -23,15 +23,17 @@ def _fetch(url):
 
 
 def _get_title_and_descr(url):
-    title, descr = None, ''
     info = _fetch(url)[1][0][1][2][0][0][2][0]
-    it = info.iterchildren()
-    table = next(it)[0]
-    if len(table) == 8:
+    table = info[0][0]
+    div = info[-2]
+    descr = ''
+    if table.tag != 'table' or len(table) < 8:
+        title = div[1].text
+    else:
         title = table[1][1].text
         for i in [0, 3, 4, 5]:
             descr += table[i][1].text + '\n'
-    return title, descr + next(it)[2].tail.lstrip()
+    return title, descr + div[2].tail.lstrip()
 
 
 class _EventInfo:

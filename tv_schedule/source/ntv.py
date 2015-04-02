@@ -38,12 +38,13 @@ class _Descriptions:
 
     def get(self, a):
         href = a.get('href')
-        path = urllib.parse.urlsplit(href).path
-        key = path.split('/')[2]
+        try:
+            key = href[href.rindex('/', 0, -1) + 1: -1]
+        except ValueError:
+            return
         descr = self._cash.get(key)
         if descr is None:
             self._cash[key] = descr = _get_descr(href)
-
         return descr
 
 

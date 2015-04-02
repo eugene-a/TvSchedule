@@ -12,14 +12,16 @@ def _win2linux_month(month):
     return month_map.get(month) or month + ('.' if month[0] != 'И' else 'я')
 
 
-# s starts with an abbreviated weekday (2 chars)
-# and ends with an abbreviated month (3 chars)
 if env.windows():
-    def fromwin(s):
+    def _fromwin(s, fmt):
         return s
 else:
-    def fromwin(s):
-        return s[:2] + '.' + s[2:-3] + _win2linux_month(s[-3:])
+    def _fromwin(s, fmt):
+        if fmt[:2] == '%a':
+            s = s[:2] + '.' + s[2:]
+        if fmt[-2:] == '%b':
+            s = s[:-3] + _win2linux_month(s[-3:])
+        return s
 
 
 # month as an integer and year as a string with a leading space
@@ -55,11 +57,12 @@ def nominative_month(s):
 
 # parse a date string with no year information
 # assuming proximity to the current date
-def parse_date(s, format):
-    if format[-1] == 'B':
+def parse_date(s, fmt):
+    s = _fromwin(s, fmt)
+    if fmt[-1] == 'B':
         s = nominative_month(s)
     #  initially assume the current year
-    dt = datetime.datetime.strptime(s + _year, format + ' %Y')
+    dt = datetime.datetime.strptime(s + _year, fmt + ' %Y')
     return _fixyear(dt.date())
 
 

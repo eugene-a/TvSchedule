@@ -1,0 +1,44 @@
+import datetime
+import pytz
+import httplib2
+import lxml.html
+from tv_schedule import schedule, dateutil
+
+
+def need_channel_code():
+    return True
+
+channel_code = None
+
+_URL = 'http://www.tv.lv/kanali/'
+_source_tz = pytz.timezone('Europe/Riga')
+_daydelta = datetime.timedelta(1)
+_http = httplib2.Http()
+
+
+def get_schedule(channel, tz):
+    ch_code = channel_code.get(channel)
+    if ch_code is None:
+        return []
+
+    url = _URL + ch_code + '/'
+    today = dateutil.tv_date_now(_source_tz, 0)
+    weekday_now = today.weekday()
+    sched = schedule.Schedule(tz, _source_tz)
+
+    d = today
+    for i in range(0, 7 - weekday_now):
+        sched.set_date(d)
+        content = _http.request(url + str(i) + '/')[1]
+        doc = lxml.html.fromstring(content)
+        page_channel = doc[1][7][2][0][0][2][0][0][0][0][1][0]
+        table = page_channel[0][0][0][1][0][0][2][0][0]
+        for event in (x[0] for x in table):
+            it = event.iterchildren()
+            sched.set_time(next(it).text)
+            div = next(it)
+            title = next(div.iterchildren('a')).text_content()
+            sched.set_title(title.split(' (')[0])
+            sched.set_descr(div[0].get('value').split(';;')[1])
+        d += _daydelta
+    return sched.pop()

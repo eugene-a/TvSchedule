@@ -27,7 +27,7 @@ def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
     content = _http.request(url)[1]
     doc = lxml.etree.fromstring(content, _parser)
-    return doc[1][5][0][4][0][0]
+    return doc[1][-1][0][4][0][0]
 
 
 def _parse_infoitem(li):
