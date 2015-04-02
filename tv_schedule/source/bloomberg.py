@@ -31,7 +31,8 @@ def get_schedule(channel, tz):
 
     tree = lxml.etree.parse(_URL, _parser)
     doc = tree.getroot()
-    for tab in doc[1][21][6][0][0][3:]:
+    container = next(doc[1].iterchildren('div'))
+    for tab in container[6][0][0][3:]:
         it = tab.iterchildren()
         date = _to_month_number(next(it).text)
         d = datetime.datetime.strptime(date, '%m %d, %Y')
