@@ -42,7 +42,7 @@ def _get_title_and_descr(url):
         foreign_title = True
         title = title[title.rindex('(') + 1: -1]
     else:
-        title = title[title.index('|') + 1:]
+        title = title[title.index('|') + 3:]
 
     table = main(doc)[1]
     if table.get('id') is None:
@@ -127,7 +127,7 @@ def get_schedule(channel, tz):
                     a = subd.find('a')
                     if a is None:
                         title = (
-                            subd.text if len(subd) == 0 else subd[0].tail[1:]
+                            subd.text if len(subd) == 0 else subd[-1].tail[1:]
                         )
                         sched.set_title(title)
                     else:

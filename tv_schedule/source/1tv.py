@@ -1,5 +1,6 @@
 import datetime
 import urllib.parse
+import itertools
 import pytz
 import httplib2
 import lxml.etree
@@ -10,39 +11,39 @@ def need_channel_code():
     return False
 
 _URL = 'http://1tv.com.ua'
-_SCHED_URL = '/uk/tv/%Y/%m/%d'
-_source_tz = pytz.timezone('Europe/Kiev')
+_SCHED_URL = 'schedule/load/week2day{}'
 _daydelta = datetime.timedelta(1)
+_source_tz = pytz.timezone('Europe/Kiev')
 _http = httplib2.Http()
-_parser = lxml.etree.HTMLParser()
+_parser = lxml.etree.HTMLParser(encoding='utf-8')
 
 
 def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
     content = _http.request(url)[1]
-    doc = lxml.etree.fromstring(content, _parser)
-    return doc[1][2][0][1][0][0][2]
+    return lxml.etree.fromstring(content, _parser)
 
 
 def _get_descr(url):
-    return '\n'.join((x.text or '') for x in _fetch(url)[-1])
+    doc = _fetch(url)
+    cut = doc[1][14][4][0][11][1][0]
+    return '\n'.join(x.text or ''
+                     for x in cut.iterdescendants() if len(x) == 0)
 
 
 class _Descriptions:
     def __init__(self):
         self._cash = {}
 
-    def get(self, ts1):
-        href = ts1[0][0].get('href')
-        spl = href.split('/')
-        if len(spl) > 4:
-            descr = _get_descr(href)
-        else:
-            key = spl[-1]
+    def get(self, a):
+        href = a.get('href')
+        islash = href.rindex('/')
+        if islash > 0:
+            key = href[islash + 1:]
             descr = self._cash.get(key)
             if descr is None:
                 self._cash[key] = descr = _get_descr(href)
-        return descr
+            return descr
 
 
 def get_schedule(channel, tz):
@@ -50,23 +51,25 @@ def get_schedule(channel, tz):
         return []
 
     today = dateutil.tv_date_now(_source_tz)
-
-    weekday_now = today.weekday()
+    weekday_now = today.isoweekday()
     sched = schedule.Schedule(tz, _source_tz)
     descriptions = _Descriptions()
+
     d = today
-    for i in range(weekday_now, 7):
+    for i in range(weekday_now, 8):
         sched.set_date(d)
-        for event in _fetch(d.strftime(_SCHED_URL))[0][3]:
-            it = event.iterchildren()
-            sched.set_time(next(it).text)
-            cell = next(it)
-            it = cell.iterchildren()
-            title = next(it)
-            if len(title) == 0:
-                sched.set_title(title.text)
+        doc = _fetch(_SCHED_URL.format(i))
+        divs = doc[0][0][2][0].iterchildren('div')
+        for time in itertools.islice(divs, 0, None, 3):
+            sched.set_time(time.text)
+            span = next(x for x in time.getnext() if x.get('class') is None)
+            if len(span) < 1:
+                sched.set_title(span.text)
             else:
-                sched.set_title(title[0].text)
-                sched.set_descr(descriptions.get(next(it)))
+                a = span[0]
+                sched.set_title(a.text)
+                descr = descriptions.get(a)
+                if descr:
+                    sched.set_descr(descr)
         d += _daydelta
     return sched.pop()

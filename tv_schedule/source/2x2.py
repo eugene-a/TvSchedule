@@ -42,7 +42,11 @@ class _EventInfo:
         self._cash = {}
 
     def get(self, row):
-        url = row.get('onclick').split("'")[1]
+        url = row.get('onclick')
+        if url is None:
+            return None, ''
+
+        url = url.split("'")[1]
         key = url[url.rindex('/', 0, -1) + 1: -1]
         title, descr = self._cash.get(key) or (None, None)
         if descr is None:
@@ -67,11 +71,13 @@ def get_schedule(channel, tz):
         sched.set_date(d)
         for row in tab:
             it = row.iterchildren()
-            sched.set_time(next(it)[0][0].text)
+            time = next(it)[0][0].text
             title, descr = event_info.get(row)
             if title is None:
                 next(it)
                 title = next(it)[0].text
-            sched.set_title(title)
-            sched.set_descr(descr)
+            if title is not None:
+                sched.set_time(time)
+                sched.set_title(title)
+                sched.set_descr(descr)
     return sched.pop()

@@ -37,7 +37,8 @@ def get_schedule(channel, tz):
         for event in (x for x in inner[2:] if len(x) > 1):
             sched.set_time(event[0].text)
             info = event[1]
-            sched.set_title(info[0].text)
+            title = info[0]
+            sched.set_title(title.text or title[0].text)
             descr = ' '.join(info[1].text.split())
             descr = descr + '\n' if descr else ''
             sched.set_descr(descr + info[2][0].text.strip())

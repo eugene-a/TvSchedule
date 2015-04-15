@@ -23,7 +23,7 @@ def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
     content = _http.request(url)[1]
     doc = lxml.html.fromstring(content)
-    return doc[2][5][0][2][0][1][0][1][1][0]
+    return doc[2][8][0][2][0][1][0][1][1][0]
 
 
 def _get_descr(url):

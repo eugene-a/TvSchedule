@@ -76,8 +76,10 @@ def get_schedule(channel, tz):
             else:
                 a = title[0]
                 sched.set_title(a.text)
-                descr = (cont[1].text + '\n' + cont[2].text + '\n' +
-                         descriptions.get(a))
+                descr = cont[1].text + '\n'
+                if len(cont) > 2:
+                    descr += cont[2].text + '\n'
+                descr += descriptions.get(a)
                 sched.set_descr(descr)
         d += _daydelta
     return sched.pop()

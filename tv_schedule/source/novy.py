@@ -60,8 +60,12 @@ def get_schedule(channel, tz):
         day = _fetch(url)[0][0][1][0][1][0]
         for a in (x[0] for x in day):
             sched.set_time(a[0].text)
-            sched.set_title(a[2].text)
-            descr = descriptions.get(a) or a.getnext()[0][3].text
-            sched.set_descr(descr)
+            title = a[2].text
+            descr = descriptions.get(a) or a.getnext()[0][3].text.strip()
+            if title is None and descr:
+                title, descr = descr.split(' - ', 1)
+            if title:
+                sched.set_title(title)
+                sched.set_descr(descr)
         d += _daydelta
     return sched.pop()

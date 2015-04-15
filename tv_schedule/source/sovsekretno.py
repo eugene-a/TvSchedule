@@ -1,4 +1,5 @@
 import itertools
+import urllib.parse
 import pytz
 import httplib2
 import lxml.etree
@@ -22,8 +23,9 @@ def _fetch(url):
 
 
 def _get_descr(url):
-    text = _fetch(url)[0][0][2][0][1][-2]
-    return '\n'.join(x.text or '' for x in text)
+    if urllib.parse.urlparse(url).path != '/':
+        text = _fetch(url)[0][0][2][0][1][-2]
+        return '\n'.join(x.text or '' for x in text)
 
 
 class _Descriptions:
@@ -38,7 +40,7 @@ class _Descriptions:
         key = href[href.rindex('/', 0, -1) + 1: -1]
         descr = self._cash.get(key)
         if descr is None:
-            self._cash[key] = descr = _get_descr(href)
+            self._cash[key] = descr = _get_descr(href) or ''
         return descr
 
 
@@ -58,7 +60,7 @@ def get_schedule(channel, tz):
             event = tv[0]
             sched.set_time(event[0].text)
             info = event[1]
-            sched.set_title(info[1].text)
+            sched.set_title(info[1].text.lstrip())
             p = info[0]
             descr = (p.text.rstrip() + '\n' + p[0].text.strip() + '\n' +
                      descriptions.get(tv[1]))

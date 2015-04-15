@@ -63,7 +63,7 @@ def get_schedule(channel, tz):
                 descr = span[0].text
             else:
                 a = span[0]
-                title = a.text
+                title = a.text or span[2].text
                 descr = descriptions.get(a)
             sched.set_title(title)
             sched.set_descr(descr)

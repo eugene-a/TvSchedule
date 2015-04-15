@@ -91,7 +91,7 @@ def get_schedule(channel, tz):
             sched.set_time(div[0].text)
             title = div[1]
             if len(title) == 0:
-                sched.set_title(title.text)
+                sched.set_title(title.text.lstrip())
             else:
                 a = title[0]
                 sched.set_title(a.text)

@@ -55,7 +55,10 @@ class Schedule:
 
     def set_title(self, title):
         if title is None:
+            self._events.pop()
             return
+
+        title = title.strip()
 
         event = self._events[-1]
         event.title = title.rstrip('.')

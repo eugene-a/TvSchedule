@@ -52,7 +52,6 @@
 60. FOX
 61. SET
 64. Nat Geo Wild
-66. FOX
 67. Еспресо TV
 69. Viasat Nature
 70. Viasat Explore

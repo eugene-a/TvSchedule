@@ -29,5 +29,5 @@ def get_schedule(channel, tz):
         for li in tv_program[0]:
             span = li[0]
             sched.set_time(span.text)
-            sched.set_title(span.tail)
+            sched.set_title(span.tail.strip())
     return sched.pop()

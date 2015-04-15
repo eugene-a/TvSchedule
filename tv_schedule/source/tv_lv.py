@@ -32,8 +32,8 @@ def get_schedule(channel, tz):
         content = _http.request(url + str(i) + '/')[1]
         doc = lxml.html.fromstring(content)
         page_channel = doc[1][7][2][0][0][2][0][0][0][0][1][0]
-        table = page_channel[0][0][0][1][0][0][2][0][0]
-        for event in (x[0] for x in table):
+        table = page_channel[0][0][0][1][0][0][2][0]
+        for event in (x for x in table if x.get('id') == 'programrow'):
             it = event.iterchildren()
             sched.set_time(next(it).text)
             div = next(it)

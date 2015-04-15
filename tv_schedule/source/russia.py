@@ -34,20 +34,25 @@ def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
     content = _http.request(url)[1]
     doc = lxml.html.fromstring(content, parser=_parser)
-    main = doc.get_element_by_id('main')
-    return main[0]
+    try:
+        main = doc.get_element_by_id('main')
+    except KeyError:
+        pass
+    else:
+        return main[0]
 
 
 def _get_descr(url):
-    try:
-        cont = _fetch(url)
-        if cont.get('id') == 'blocks':
+    cont = _fetch(url)
+    if cont is not None and cont.get('id') == 'blocks':
+        try:
             b = next(
                 (x for x in cont if x.get('data-block_id') == 'about_full')
             )
+        except StopIteration:
+            pass
+        else:
             return b[1][0].text_content().replace('\t', '')
-    except StopIteration:
-        pass
 
 
 class _Descriptions:
@@ -61,7 +66,7 @@ class _Descriptions:
             key = int(url[url.rindex('/') + 1:])
             descr = self._cash.get(key)
             if descr is None:
-                self._cash[key] = descr = _get_descr(url)
+                self._cash[key] = descr = _get_descr(url) or ''
             return descr
 
 
