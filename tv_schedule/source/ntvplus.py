@@ -55,7 +55,7 @@ def _get_title_and_descr(url):
             if field in ('Рейтинг', 'Режиссер', 'В ролях'):
                 descr += field + ': '
             descr += value + '\n'
-    return title, descr + item[5].text
+    return title, descr + (item[5].text or '')
 
 
 class _EventInfo:
