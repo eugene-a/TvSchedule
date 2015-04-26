@@ -37,11 +37,12 @@ class _Descriptions:
 
     def get(self, a):
         href = a.get('href')
-        key = href[href.rindex('/') + 1:]
-        descr = self._cash.get(key)
-        if descr is None:
-            self._cash[key] = descr = _get_descr(href)
-        return descr
+        if not urllib.parse.urlparse(href).scheme:
+            key = href[href.rindex('/') + 1:]
+            descr = self._cash.get(key)
+            if descr is None:
+                self._cash[key] = descr = _get_descr(href)
+            return descr
 
 
 def get_schedule(channel, tz):

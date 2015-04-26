@@ -28,14 +28,14 @@ def _open_source(name):
     return pkg_resources.resource_stream(source_package(), name)
 
 
-# an optional congfiguration file may specify alternative
+# an optional configuration file may specify alternative
 # locations  for input and/or output data
 class _Config:
     def __init__(self, config_file):
         partial = functools.partial
 
         self.open_channels = partial(pkg_resources.resource_stream, __name__)
-        self._open_source = _open_source
+        self.open_source = _open_source
 
         self._channels = _DEFAULT_CHANNELS
         self._source_channels = os.path.join(
@@ -83,7 +83,7 @@ def source_package():
 
 
 def open_source(name):
-    return _config._open_source(name + _YAML_EXT)
+    return _config.open_source(name + _YAML_EXT)
 
 
 def output_dir():
