@@ -23,7 +23,7 @@ def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
     content = _http.request(url)[1]
     doc = lxml.html.fromstring(content)
-    return doc[2][6][0][3][0][1][0][1][1][0]
+    return doc[2][9][0][3][0][1][0][1][1][0]
 
 
 def _get_descr(url):
@@ -54,15 +54,16 @@ def get_schedule(channel, tz):
     sched = schedule.Schedule(tz, _source_tz)
     descriptions = _Descriptions()
 
-    for date_raw in _fetch(_SCHED_URL)[3][0][0][1]:
-        div = date_raw[0][0][0]
+    for date_row in _fetch(_SCHED_URL)[3][0][0][1]:
+        it = date_row.iterchildren()
+        div = next(it)[0][0]
         date = div.text + ' ' + div.tail
         sched.set_date(dateutil.parse_date(date, '%a %d %B'))
 
-        for cell in date_raw[1]:
-            info = cell[1]
-            sched.set_time(info[0][0][0].text)
-            a = info[1][0][1]
+        for info in (x[1] for x in next(it)):
+            it = info.iterchildren()
+            sched.set_time(next(it)[0][0].text)
+            a = next(it)[0][1]
             sched.set_title(a.text)
             descr = descriptions.get(a)
             if descr:
