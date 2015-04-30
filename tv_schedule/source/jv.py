@@ -19,7 +19,7 @@ def get_schedule(channel, tz):
 
     tree = lxml.etree.parse(_URL, _parser)
     doc = tree.getroot()
-    tabs = doc[2][31][0][0][6]
+    tabs = doc[2][31][0][0][7]
     for day, tab in zip(tabs[1], tabs[3]):
         d = dateutil.parse_date(day.text.strip() + day[0].text, '%a%d.%m')
         sched.set_date(d)

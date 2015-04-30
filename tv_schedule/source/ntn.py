@@ -59,7 +59,7 @@ def get_schedule(channel, tz):
             if len(info) == 0:
                 sched.set_title(info.text.strip())
             else:
-                a = info[0]
+                a = info[-2]
                 sched.set_title(a.text)
                 sched.set_descr(descriptions.get(a))
         d += _daydelta
