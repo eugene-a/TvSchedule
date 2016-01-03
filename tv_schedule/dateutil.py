@@ -21,7 +21,7 @@ _month, _year = _get_month_and_year(datetime.date.today())
 del _get_month_and_year
 
 
-# replace year if the month is closer in an adjacent year
+# if the month is closer in an adjacent year assume that year
 def _fixyear(d):
     mdelta = d.month - _month
     if mdelta < -6:

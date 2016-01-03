@@ -1,7 +1,7 @@
 import datetime
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.etree
 from tv_schedule import schedule, dateutil
 
@@ -12,7 +12,6 @@ def need_channel_code():
 _URL = 'http://novy.tv/tv/{}/'
 _source_tz = pytz.timezone('Europe/Kiev')
 _daydelta = datetime.timedelta(1)
-_http = httplib2.Http()
 _parser = lxml.etree.HTMLParser(encoding='utf-8')
 
 _weekdays = ['monday', 'tuesday', 'wednesday', 'thursday',
@@ -20,14 +19,17 @@ _weekdays = ['monday', 'tuesday', 'wednesday', 'thursday',
 
 
 def _fetch(url):
-    content = _http.request(url)[1]
-    doc = lxml.etree.fromstring(content, _parser)
-    return doc[1][5][0][3]
+    resp = requests.get(url)
+    doc = lxml.etree.fromstring(resp.content, _parser)
+    return doc[1][9][0][3]
 
 
 def _get_descr(url):
-    cont = _fetch(url)[1][0][0][1][1]
-    return '\n'.join(x.text or '' for x in cont[1:])
+    try:
+        cont = _fetch(url)[1][0][0][1][1]
+        return '\n'.join(x.text or '' for x in cont[1:])
+    except IndexError:
+        return ''
 
 
 class _Descriptions:
@@ -57,8 +59,8 @@ def get_schedule(channel, tz):
     for i in range(weekday_now, 7):
         sched.set_date(d)
         url = _URL.format(_weekdays[i])
-        day = _fetch(url)[0][0][1][0][1][0]
-        for a in (x[0] for x in day):
+        day = _fetch(url)[0][0][0][0][1][0][1][0]
+        for a in (x[0] for x in day if len(x) > 0):
             sched.set_time(a[0].text)
             title = a[2].text
             descr = descriptions.get(a) or a.getnext()[0][3].text.strip()

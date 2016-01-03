@@ -1,7 +1,7 @@
 import datetime
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.html
 from tv_schedule import schedule, dateutil
 
@@ -13,29 +13,29 @@ _URL = 'http://inter.ua'
 _SCHED_URL = '/ru/tv/%Y/%m/%d'
 _source_tz = pytz.timezone('Europe/Kiev')
 _daydelta = datetime.timedelta(1)
-_http = httplib2.Http()
 _parser = lxml.etree.HTMLParser()
 
 
 def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    doc = lxml.etree.fromstring(content, _parser)
-    return doc[1][-16][0][0][3][0][0]
+    resp = requests.get(url)
+    doc = lxml.etree.fromstring(resp.content, _parser)
+    return doc[1][-16][0][0][4][0][0]
 
 
 def _get_descr(url):
     descr = ''
     inside = _fetch(url)
-    info = inside[1][0]
-    if len(info) > 2:
-        for dt in info[2][0][::2]:
-            field = dt.text
-            if field in ('Режиссер:', 'В ролях:'):
-                descr += field + ' '
-            descr += dt.getnext().text + '\n'
-    static = inside.find('.//div[@class="b-static-text"]')
-    descr += '\n'.join(x.text if x.text else '' for x in static)
+    if inside.get('class') == 'b-block-inside':
+        info = inside[1][0]
+        if len(info) > 2:
+            for dt in info[2][0][::2]:
+                field = dt.text
+                if field in ('Режиссер:', 'В ролях:'):
+                    descr += field + ' '
+                descr += dt.getnext().text + '\n'
+        static = inside.find('.//div[@class="b-static-text"]')
+        descr += '\n'.join(x.text if x.text else '' for x in static)
     return descr
 
 
@@ -72,7 +72,10 @@ def get_schedule(channel, tz):
                 sched.set_title(dd.text)
             else:
                 a = dd[-1]
-                sched.set_title(a.text)
-                sched.set_descr(descriptions.get(a))
+                if a.tag == 'a':
+                    sched.set_title(a.text)
+                    sched.set_descr(descriptions.get(a))
+                else:
+                    sched.set_title(a.tail)
         d += _daydelta
     return sched.pop()

@@ -20,9 +20,9 @@ def get_schedule(channel, tz):
 
     tree = lxml.etree.parse(_URL, _parser)
     doc = tree.getroot()
-    program = doc[1][0][0][3][0][0][1][2]
+    program = doc[1][0][0][3][0][0][0][2]
     for tab in program[4: 11]:
-        dt = datetime.datetime.strptime(tab.get('rel'), 'tv_%Y%m%d')
+        dt = datetime.datetime.strptime(tab.get('data-day'), 'tv_%Y%m%d')
         sched.set_date(dt.date())
         for event in tab[0]:
             it = event.iterchildren()

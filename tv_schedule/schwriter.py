@@ -151,7 +151,7 @@ def _open_r(name):
     return open(name, encoding='utf-8',)
 
 
-# open a file for writing text data  using CP1251 encoding
+# open a file for writing text data using CP1251 encoding
 def _open_w(name):
     return open(name, 'w', encoding='cp1251', errors=None)
 

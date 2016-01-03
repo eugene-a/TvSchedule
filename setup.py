@@ -12,7 +12,7 @@ setuptools.setup(name='tv_schedule',
                  description='Generate data for ListTV',
                  author='Eugene Alterman',
                  packages=setuptools.find_packages(),
-                 install_requires=['httplib2', 'lxml', 'tzlocal', 'PyYAML'],
+                 install_requires=['requests', 'lxml', 'tzlocal', 'PyYAML'],
                  zip_safe=True,
                  entry_points={
                      'console_scripts': [
@@ -20,8 +20,6 @@ setuptools.setup(name='tv_schedule',
                      ]
                  },
                  package_data={'tv_schedule': ['channels.txt'],
-                               'tv_schedule.source': [
-                               'channels/*.yaml', 'ssl/cacerts.crt'
-                     ]
-                 }
+                               'tv_schedule.source': ['channels/*.yaml']
+                               }
                  )

@@ -1,6 +1,6 @@
 import datetime
 import urllib.parse
-import httplib2
+import requests
 import pytz
 import lxml.html
 from tv_schedule import schedule, dateutil
@@ -10,26 +10,30 @@ def need_channel_code():
     return False
 
 _URL = 'http://www.ntv.ru'
-_SCHED_URL = '/rest/currsched.jsp?'
+_SCHED_URL = '/rest/currsched.jsp'
 
 _source_tz = pytz.timezone('Europe/Moscow')
 _daydelta = datetime.timedelta(1)
 
 
-_http = httplib2.Http()
 _parser = lxml.html.HTMLParser(encoding='cp1251')
 
 
-def _fetch(url):
+def _fetch(url, params=None):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    return lxml.html.fromstring(content, parser=_parser)
+    resp = requests.get(url, params)
+    return lxml.html.fromstring(resp.content, parser=_parser)
 
 
 def _get_descr(url):
-    c_left = _fetch(url)[1][21][0][0][0]
-    abt = next(x for x in c_left if x.get('id') == 'abt')
-    return abt[1].text_content()
+    body = _fetch(url)[1]
+    bgout = next(x for x in body if x.get('id') == 'bgout')
+    try:
+        abt = next(x for x in bgout[0][0][0] if x.get('id') == 'abt')
+    except StopIteration:
+        return ''
+    else:
+        return abt[1].text_content()
 
 
 class _Descriptions:
@@ -61,8 +65,7 @@ def get_schedule(channel, tz):
     d = today
     for i in range(weekday_now, 7):
         sched.set_date(d)
-        query = {'d': d.strftime('%Y%m%d')}
-        tbs = _fetch(_SCHED_URL + urllib.parse.urlencode(query))
+        tbs = _fetch(_SCHED_URL, {'d': d.strftime('%Y%m%d')})
         for dt in tbs[1][::2]:
             dd = dt.getnext()
             if len(dt) > 0:

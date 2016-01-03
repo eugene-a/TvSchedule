@@ -1,6 +1,6 @@
 import datetime
 import pytz
-import httplib2
+import requests
 import lxml.etree
 from tv_schedule import schedule, dateutil
 
@@ -10,13 +10,12 @@ def need_channel_code():
 
 _URL = 'http://laminortv.ru/teleprogram/'
 _source_tz = pytz.timezone('Europe/Moscow')
-_http = httplib2.Http()
 _parser = lxml.etree.HTMLParser()
 
 
 def _fetch(url):
-    content = _http.request(url)[1]
-    doc = lxml.etree.fromstring(content, _parser)
+    resp = requests.get(url)
+    doc = lxml.etree.fromstring(resp.content, _parser)
     return doc[1][0][0][2][0][0][0][0][1]
 
 
@@ -45,7 +44,7 @@ def get_schedule(channel, tz):
     sched = schedule.Schedule(tz, _source_tz)
 
     for tab in _fetch(_URL)[0][1][4:11]:
-        dt = datetime.datetime.strptime(tab.get('rel'), 'tv_%Y%m%d')
+        dt = datetime.datetime.strptime(tab.get('data-day'), 'tv_%Y%m%d')
         sched.set_date(dt.date())
         for event in tab[0]:
             it = event.iterchildren()
@@ -56,7 +55,8 @@ def get_schedule(channel, tz):
                 descr = span[0].text
             else:
                 a = next(span.iterchildren('a'))
-                title = a.text or span[2].text
+                title = (a.text or span[2].text if span[1].tag != 'span'
+                         else span[1][1].text)
                 descr = descriptions.get(a)
             sched.set_title(title)
             sched.set_descr(descr)

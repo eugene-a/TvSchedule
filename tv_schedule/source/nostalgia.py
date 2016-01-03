@@ -2,7 +2,7 @@ import datetime
 import re
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.etree
 from tv_schedule import schedule, dateutil
 
@@ -14,7 +14,6 @@ _source_tz = pytz.timezone('Europe/Moscow')
 _URL = 'http://www.nostalgiatv.ru/programs?'
 
 _daydelta = datetime.timedelta(1)
-_http = httplib2.Http()
 _parser = lxml.etree.HTMLParser()
 
 
@@ -32,9 +31,8 @@ def get_schedule(channel, tz):
     d = today
     for i in range(weekday_now, 7):
         sched.set_date(d)
-        query = urllib.parse.urlencode({'day': d.strftime('%Y-%m-%d')})
-        content = _http.request(_URL + query)[1]
-        doc = lxml.etree.fromstring(content, _parser)
+        resp = requests.get(_URL, {'day': d.strftime('%Y-%m-%d')})
+        doc = lxml.etree.fromstring(resp.content, _parser)
         table = doc[1][2][0][0][11][6]
         for row in table:
             sched.set_time(row[0][0][0].text)

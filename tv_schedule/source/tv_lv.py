@@ -1,6 +1,6 @@
 import datetime
 import pytz
-import httplib2
+import requests
 import lxml.html
 from tv_schedule import schedule, dateutil
 
@@ -13,7 +13,6 @@ channel_code = None
 _URL = 'http://www.tv.lv/kanali/'
 _source_tz = pytz.timezone('Europe/Riga')
 _daydelta = datetime.timedelta(1)
-_http = httplib2.Http()
 
 
 def get_schedule(channel, tz):
@@ -29,8 +28,8 @@ def get_schedule(channel, tz):
     d = today
     for i in range(0, 7 - weekday_now):
         sched.set_date(d)
-        content = _http.request(url + str(i) + '/')[1]
-        doc = lxml.html.fromstring(content)
+        resp = requests.get(url + str(i) + '/')
+        doc = lxml.html.fromstring(resp.content)
         page_channel = doc[1][7][2][0][0][2][0][0][0][0][1][0]
         row = page_channel[0][0][0][1][0][0][2]
         if len(row) > 0:

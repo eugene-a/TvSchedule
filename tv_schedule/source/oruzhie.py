@@ -1,6 +1,6 @@
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.etree
 from tv_schedule import schedule, dateutil
 
@@ -13,14 +13,13 @@ _URL = 'http://oruzhie.tv'
 _SCHED_URL = '/programm/'
 
 _source_tz = pytz.timezone('Europe/Moscow')
-_http = httplib2.Http()
 _parser = lxml.etree.HTMLParser()
 
 
 def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    doc = lxml.etree.fromstring(content, _parser)
+    resp = requests.get(url)
+    doc = lxml.etree.fromstring(resp.content, _parser)
     return doc[1][3][1][4][1][1][1]
 
 

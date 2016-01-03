@@ -1,7 +1,7 @@
 import datetime
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.html
 from tv_schedule import schedule, dateutil
 
@@ -13,25 +13,29 @@ _URL = 'http://www.karusel-tv.ru'
 _SCHED_URL = '/schedule/%Y-%m-%d'
 _source_tz = pytz.timezone('Europe/Moscow')
 _daydelta = datetime.timedelta(1)
-_http = httplib2.Http()
 
 
 def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    doc = lxml.html.fromstring(content)
-    return doc[1][0][0][-1]
+    resp = requests.get(url)
+    doc = lxml.html.fromstring(resp.content)
+    main_wrapper = next(x for x in doc[1] if x.get('id') == 'main-wrapper')
+    return main_wrapper[0][-1]
 
 
 def _get_text(el):
-    return '/n'.join(x.text_content() for x in el.iterchildren('p'))
+    return '\n'.join(x.text_content() for x in el.iterchildren('p'))
 
 
 def _get_descr(url):
     content = _fetch(url)
-    block = next(content.iterchildren('input')).getnext()
+    try:
+        block = next(content.iterchildren('input')).getnext()
+    except StopIteration:
+        return ''
+
     left = block[0][1][0][0]
-    descr = left[0][1].text + '\n'
+    descr = (left[0][1].text or '') + '\n'
     for child in left.getnext()[1:]:
         cls = child.get('class')
         if cls == 'full':
@@ -82,9 +86,11 @@ def get_schedule(channel, tz):
             if a.tag != 'a':
                 sched.set_title(a.text)
                 sched.set_descr(a.getnext().text)
+            elif len(a) < 2:
+                sched.set_title(a[-1].text)
             else:
-                sched.set_title(a[1].text)
-                descr = a[2].text + '\n' + descriptions.get(a)
+                sched.set_title(a[-2].text)
+                descr = (a[-1].text or '') + '\n' + descriptions.get(a)
                 sched.set_descr(descr)
         d += _daydelta
     return sched.pop()

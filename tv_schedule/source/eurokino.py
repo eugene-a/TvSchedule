@@ -1,7 +1,7 @@
 import urllib.parse
 import datetime
 import pytz
-import httplib2
+import requests
 import lxml.etree
 
 from tv_schedule import schedule, dateutil
@@ -12,11 +12,9 @@ def need_channel_code():
 
 _source_tz = pytz.timezone('Europe/Moscow')
 _URL = 'http://eurokino.tv/schedule_ajax_helper.php'
-_headers = {'Content-Type': 'application/x-www-form-urlencoded'}
 
 _daydelta = datetime.timedelta(1)
 
-_http = httplib2.Http()
 _parser = lxml.etree.HTMLParser(encoding='utf-8')
 
 
@@ -32,10 +30,10 @@ def get_schedule(channel, tz):
     d = today
     for i in range(weekday_now, 7):
         sched.set_date(d)
-        body = urllib.parse.urlencode({'d': d.strftime("%Y%m%d")})
+        data = {'d': d.strftime("%Y%m%d")}
 
-        content = _http.request(_URL, 'POST', body, _headers)[1]
-        doc = lxml.etree.fromstring(content, _parser)
+        resp = requests.post(_URL, data)
+        doc = lxml.etree.fromstring(resp.content, _parser)
         for event in doc[0][0]:
             sched.set_time(event[0].text)
             title = event[1][0].text

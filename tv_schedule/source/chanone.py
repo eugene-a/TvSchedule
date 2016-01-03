@@ -1,7 +1,7 @@
 import datetime
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.html
 from tv_schedule import schedule, dateutil
 
@@ -23,13 +23,11 @@ _PROG_URL = '/schedule/%Y-%m-%d'
 _source_tz = pytz.timezone('Europe/Berlin')
 _daydelta = datetime.timedelta(1)
 
-_http = httplib2.Http()
-
 
 def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    doc = lxml.html.fromstring(content)
+    resp = requests.get(url)
+    doc = lxml.html.fromstring(resp.content)
     return next(doc[1][2][0].iterchildren('div'))[1]
 
 
@@ -38,18 +36,22 @@ def _get_text(elem):
 
 
 def _get_child_by_class(elem, cls):
-    return next(x for x in elem if x.get('class') == cls)
+    try:
+        return next(x for x in elem if x.get('class') == cls)
+    except StopIteration:
+        pass
 
 
 def _get_descr(url):
     ann = _get_child_by_class(_fetch(url), 'announce_announce')
+    if ann is None:
+        return
+
     descr = _get_text(ann[0][2])
 
-    try:
-        right = _get_child_by_class(ann[2], 'announce-view-service')
+    right = _get_child_by_class(ann[2], 'announce-view-service')
+    if right is not None:
         descr += _get_text(right)
-    except StopIteration:
-        pass
 
     return descr
 

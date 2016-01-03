@@ -1,8 +1,10 @@
 import urllib.parse
+import itertools
+import datetime
 import pytz
-import httplib2
+import requests
 import lxml.html
-from tv_schedule import schedule, dateutil
+from tv_schedule import schedule
 
 
 def need_channel_code():
@@ -11,17 +13,14 @@ def need_channel_code():
 _URL = 'http://www.otr-online.ru'
 _SCHED_URL = 'teleprogramma'
 
-_source_tz = pytz.timezone('Europe/Moscow')
-
-_http = httplib2.Http()
+_source_tz = pytz.UTC
 
 
 def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    doc = lxml.html.fromstring(content)
-    container = next(x for x in doc[1] if x.get('class') == 'conteiner')
-    return container[14]
+    resp = requests.get(url)
+    doc = lxml.html.fromstring(resp.content)
+    return doc[1][14][4][0][1][0][0]
 
 
 def _get_id(url):
@@ -33,16 +32,12 @@ def _get_id(url):
 
 
 def _get_descr(url):
-    bb_none = _fetch(url)[4][0]
-    div = next(
-        (
-            x for x in bb_none
-            if len(x) > 0 and x[0].get('class') == 'ProgrammMainDiv'
-        ),
-        None
-        )
-    if div is not None:
-        return '\n'.join(x.text or '' for x in div[1].iterchildren('p'))
+    try:
+        item = _fetch(url)
+    except IndexError:
+        pass
+    else:
+        return '\n'.join(x.text or '' for x in item[1][0].iterchildren('p'))
 
 
 class _Descriptions:
@@ -51,7 +46,7 @@ class _Descriptions:
 
     def get(self, a):
         href = a.get('href')
-        if href and not href.endswith('news/'):
+        if href and not urllib.parse.urlparse(href).scheme:
             key = _get_id(href)
             descr = self._cash.get(key)
             if descr is None:
@@ -66,16 +61,12 @@ def get_schedule(channel, tz):
     sched = schedule.Schedule(tz, _source_tz)
     descriptions = _Descriptions()
 
-    for tab in _fetch(_SCHED_URL)[2:9]:
-        d = dateutil.parse_date(tab.get('id'), 'tab_%d_%m')
-        sched.set_date(d)
-
-        for tele in tab:
-            a = tele[0]
-            span = a[0][0]
-            sched.set_time(span.text)
-            sched.set_title(span.tail.rstrip())
-            descr = descriptions.get(a)
-            if descr:
-                sched.set_descr(descr)
+    slider = _fetch(_SCHED_URL)[3][1]
+    for item in itertools.chain(*slider):
+        dt = datetime.datetime.utcfromtimestamp(int(item.get('data-time')))
+        sched.set_datetime(dt)
+        a = item[1][0]
+        sched.set_title(a.text)
+        descr = descriptions.get(a)
+        sched.set_descr(descr)
     return sched.pop()

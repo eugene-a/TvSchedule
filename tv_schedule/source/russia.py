@@ -1,7 +1,7 @@
 import datetime
 import urllib.parse
 import itertools
-import httplib2
+import requests
 import pytz
 import lxml.html
 from tv_schedule import schedule, dateutil
@@ -27,13 +27,11 @@ _daydelta = datetime.timedelta(1)
 
 _parser = lxml.html.HTMLParser(encoding='utf-8')
 
-_http = httplib2.Http()
-
 
 def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    doc = lxml.html.fromstring(content, parser=_parser)
+    resp = requests.get(url)
+    doc = lxml.html.fromstring(resp.content, parser=_parser)
     try:
         main = doc.get_element_by_id('main')
     except KeyError:
@@ -63,7 +61,7 @@ class _Descriptions:
         url = a.get('href')
         # make sure it's a relative url
         if urllib.parse.urlsplit(url).scheme == '':
-            key = int(url[url.rindex('/') + 1:])
+            key = int(url[url.rindex('/', 0,  -1) + 1: -1])
             descr = self._cash.get(key)
             if descr is None:
                 self._cash[key] = descr = _get_descr(url) or ''

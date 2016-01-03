@@ -1,24 +1,22 @@
 import datetime
 import pytz
-import httplib2
+import requests
 import lxml.etree
-from tv_schedule import schedule, dateutil
+from tv_schedule import schedule
 
 
 def need_channel_code():
     return False
 
 _URL = 'http://www.autoplustv.ru/teleprogram'
-_SCHED_URL = '/schedule/?'
 _source_tz = pytz.timezone('Europe/Moscow')
 _daydelta = datetime.timedelta(1)
-_http = httplib2.Http()
 _parser = lxml.etree.HTMLParser()
 
 
 def _fetch(url):
-    content = _http.request(url)[1]
-    doc = lxml.etree.fromstring(content, _parser)
+    resp = requests.get(url)
+    doc = lxml.etree.fromstring(resp.content, _parser)
     return doc[1][0][0][0][0][3][0][0]
 
 
@@ -48,18 +46,21 @@ def get_schedule(channel, tz):
     sched = schedule.Schedule(tz, _source_tz)
     descriptions = _Descriptions()
 
-    buttons = _fetch(_URL)[2][2][3]
-    dates = (dateutil.parse_date(x.text, '%a %d.%m') for x in buttons[0])
-    for d, tab in zip(dates, buttons.itersiblings()):
+    for tab in _fetch(_URL)[0][2][4: -1]:
+        d = datetime.datetime.strptime(tab.get('data-day'), 'tv_%Y%m%d').date()
         sched.set_date(d)
-        for event in tab[0]:
-            sched.set_time(event[0].text)
-            span = event[1]
-            if len(span) < 2:
-                sched.set_title(span.text.lstrip())
-            else:
-                a = next(span.iterchildren('a', reversed=True))
-                sched.set_title(a.text)
-                sched.set_descr(descriptions.get(a))
+        for period in tab[0]:
+            for event in period[1:]:
+                sched.set_time(event[0][0].text)
+                dd = event[1]
+                it = dd.iterdescendants()
+                next(it)
+                a = next(it)
+                if a.tag == 'a':
+                    sched.set_title(a.text)
+                    sched.set_descr(descriptions.get(a))
+                else:
+                    sched.set_title(next(it).text)
+                    sched.set_descr(next(it).text)
 
     return sched.pop()

@@ -1,7 +1,7 @@
 import datetime
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.html
 from tv_schedule import schedule, dateutil
 
@@ -12,7 +12,6 @@ def need_channel_code():
 _URL = 'http://www.k1.ua'
 _SCHED_URL = '/{}/tv/%Y/%m/%d/week'
 _source_tz = pytz.timezone('Europe/Kiev')
-_http = httplib2.Http()
 
 
 def _week_monday(d):
@@ -31,8 +30,8 @@ def child_by_class(el, cls):
 
 def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    doc = lxml.html.fromstring(content)
+    resp = requests.get(url)
+    doc = lxml.html.fromstring(resp.content)
     holder = child_by_class(doc[1], 'b-holder')
     return child_by_class(holder[10][0], 'b-inside-left')
 

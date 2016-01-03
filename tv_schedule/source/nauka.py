@@ -1,7 +1,7 @@
 import datetime
 import pytz
 import lxml.etree
-from tv_schedule import schedule, dateutil
+from tv_schedule import schedule
 
 
 def need_channel_code():

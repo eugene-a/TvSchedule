@@ -1,7 +1,7 @@
 import datetime
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.html
 from tv_schedule import schedule
 
@@ -12,13 +12,12 @@ def need_channel_code():
 _URL = 'http://www.boets.ru'
 _SCHED_URL = '/teleprogram'
 _source_tz = pytz.timezone('Europe/Moscow')
-_http = httplib2.Http()
 _parser = lxml.html.HTMLParser(encoding='utf-8')
 
 
 def _fetch(url):
-    content = _http.request(url)[1]
-    doc = lxml.html.fromstring(content, parser=_parser)
+    resp = requests.get(url)
+    doc = lxml.html.fromstring(resp.content, parser=_parser)
     return doc[1][3][0][1][0][2][0]
 
 
@@ -47,8 +46,9 @@ def get_schedule(channel, tz):
     descriptions = _Descriptions()
 
     url = urllib.parse.urljoin(_URL, _SCHED_URL)
-    for tab in _fetch(url)[1][4: 11]:
-        d = datetime.datetime.strptime(tab.get('rel'), 'tv_%Y%m%d')
+    zoo = _fetch(url)
+    for tab in zoo[1][4: -1]:
+        d = datetime.datetime.strptime(tab.get('data-day'), 'tv_%Y%m%d')
         sched.set_date(d)
         for item in tab[0]:
             it = item.iterchildren()

@@ -1,9 +1,8 @@
 import datetime
 import urllib.parse
 import json
-import pkg_resources
 import lxml.etree
-import httplib2
+import requests
 from tv_schedule import dateutil, schedule
 
 
@@ -16,8 +15,6 @@ _URL = 'https://tv.yandex.ru'
 _CLS_DETAILS = 'b-tv-program-details'
 _CLS_DESCR = 'b-tv-program-description'
 
-_cacerts = pkg_resources.resource_filename(__name__, 'ssl/cacerts.crt')
-_http = httplib2.Http(ca_certs=_cacerts)
 _parser = lxml.etree.HTMLParser(encoding='utf-8')
 
 _daydelta = datetime.timedelta(1)
@@ -25,16 +22,17 @@ _daydelta = datetime.timedelta(1)
 _RETRY_COUNT = 5
 
 
-def _fetch(url):
-    url = _URL + url
-    content = _http.request(url)[1]
+def _fetch(url, params=None):
+    url = urllib.parse.urljoin(_URL, url)
+    resp = requests.get(url, params)
+    content = resp.content
     if len(content) > 0:
         # retry in the case of gateway timeout
         for i in range(_RETRY_COUNT):
             doc = lxml.etree.fromstring(content, _parser)
             cont = doc[1][0]
             if cont.tag == 'div':
-                return cont[1][0]
+                return cont[2][0]
 
 
 def get_descr(a):
@@ -86,9 +84,8 @@ def get_schedule(channel, tz):
     d = today
     for i in range(weekday_now, 7):
         sched.set_date(d)
-        query = urllib.parse.urlencode({'date': d.strftime('%Y-%m-%d')})
-        url = '/87/channels/' + ch_code + '?' + query
-        content = _fetch(url)
+        url = '/87/channels/' + ch_code
+        content = _fetch(url, {'date': d.strftime('%Y-%m-%d')})
         if content is not None:
             items = content[2][0][0][0][0][0][0]
             if items.get('class') != 'tv-splash':

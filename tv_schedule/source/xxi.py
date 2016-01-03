@@ -1,7 +1,7 @@
 import datetime
 import collections
 import pytz
-import httplib2
+import requests
 import lxml.etree
 from tv_schedule import schedule, dateutil
 
@@ -10,10 +10,9 @@ def need_channel_code():
     return False
 
 _source_tz = pytz.utc
-_URL = 'http://www.tv21.lv/ru/program/%Y/%m/%d'
+_URL = 'http://www.tv21.lv/programma-ru/%d-%m-%Y/'
 _daydelta = datetime.timedelta(1)
 _parser = lxml.etree.HTMLParser()
-_http = httplib2.Http()
 
 
 _Event = collections.namedtuple('_Event', 'title times descr')
@@ -38,8 +37,8 @@ def get_schedule(channel, tz):
     d = today
     for i in range(weekday_now, 7):
         sched.set_date(d)
-        content = _http.request(d.strftime(_URL))[1]
-        doc = lxml.etree.fromstring(content, _parser)
+        resp = requests.get(d.strftime(_URL))
+        doc = lxml.etree.fromstring(resp.content, _parser)
         scroll = doc[1][1][1][2][1][0]
         events = [_extract(x) for x in scroll]
         for j in range(3):

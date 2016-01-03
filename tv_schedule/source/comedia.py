@@ -1,7 +1,7 @@
 import datetime
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.html
 from tv_schedule import schedule, dateutil
 
@@ -12,13 +12,12 @@ def need_channel_code():
 _source_tz = pytz.timezone('Europe/Moscow')
 _URL = 'http://www.comediatv.ru'
 _SCHED_URL = '/teleprogram/'
-_http = httplib2.Http()
 
 
 def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    doc = lxml.html.fromstring(content)
+    resp = requests.get(url)
+    doc = lxml.html.fromstring(resp.content)
     return doc[1][0][0][2][0][0][0][0][1][0]
 
 
@@ -48,7 +47,7 @@ def get_schedule(channel, tz):
 
     sched = schedule.Schedule(tz, _source_tz)
     for tv in _fetch(_SCHED_URL)[1][4: -1]:
-        d = datetime.datetime.strptime(tv.get('rel'), 'tv_%Y%m%d')
+        d = datetime.datetime.strptime(tv.get('data-day'), 'tv_%Y%m%d')
         sched.set_date(d)
         for li in tv[0]:
             sched.set_time(li[0].text)

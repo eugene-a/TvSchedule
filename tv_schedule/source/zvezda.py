@@ -1,8 +1,8 @@
 import urllib.parse
 import itertools
 import pytz
-import httplib2
-import lxml.etree
+import requests
+import lxml.html
 from tv_schedule import schedule, dateutil
 
 
@@ -12,25 +12,28 @@ def need_channel_code():
 _URL = 'http://tvzvezda.ru'
 _SCHED_URL = '/schedule/'
 _source_tz = pytz.timezone('Europe/Moscow')
-_http = httplib2.Http()
-_parser = lxml.etree.HTMLParser()
 
 
 def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    doc = lxml.etree.fromstring(content, _parser)
-    toptable = doc[1][4][2][0][0]
+    resp = requests.get(url)
+    doc = lxml.html.fromstring(resp.content)
+    table = next(doc[2].iterchildren('table'))
+    toptable = table[-1][0][0]
     central = next(x[0] for x in toptable if x[0].get('class') == 'central')
     return central[0][0][0][0][0][1]
 
 
 def _get_descr(url):
-    cell = _fetch(url)[0][3][0]
-    if len(cell) > 0:
-        p = cell[0]
-        if p.tag == 'p':
-            return (p.text or '') + '\n'.join(x.tail or '' for x in p)
+    try:
+        cell = next(x[0] for x in _fetch(url)[0]
+                    if x[0].get('class') == 'newstext')
+    except StopIteration:
+        pass
+    else:
+        for br in cell.iter('br'):
+            br.tail = '\n' + br.tail if br.tail else '\n'
+        return cell.text_content()
 
 
 def _get_leaf(a):
@@ -58,7 +61,7 @@ def get_schedule(channel, tz):
     sched = schedule.Schedule(tz, _source_tz)
 
     table = _fetch(_SCHED_URL)[0]
-    it = itertools.islice(table, 1, None, 2)
+    it = itertools.islice(table, 3, None, 2)
     row1 = next(it)
     days = (x[0] for x in row1[0][0][0][1:])
     row2 = next(it)

@@ -2,7 +2,7 @@ import datetime
 import json
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.html
 from tv_schedule import schedule, dateutil
 
@@ -14,17 +14,18 @@ _URL = 'http://ictv.ua'
 _SCHED_URL = '/ru/index/programs/theme/0/t/1/date/%Y-%m-%d'
 _source_tz = pytz.timezone('Europe/Kiev')
 _daydelta = datetime.timedelta(1)
-_http = httplib2.Http()
 _parser = lxml.etree.HTMLParser()
 
 
 def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
-    return _http.request(url)[1]
+    return requests.get(url).content
 
 
 def _get_descr(url):
-    return json.loads(_fetch(url).decode())['edesc']
+    moo = _fetch(url).decode()
+    if moo[0] == '{':
+        return json.loads(moo)['edesc']
 
 
 class _Descriptions:
@@ -54,7 +55,7 @@ def get_schedule(channel, tz):
         sched.set_date(d)
         url = d.strftime(_SCHED_URL)
         doc = lxml.etree.fromstring(_fetch(url), _parser)
-        for row in doc[1][4][1][0][5][2][4][0][::2]:
+        for row in (x for x in doc[1][5][1][0][5][2][4][0][::2] if len(x) > 1):
             it = row.iterchildren()
             sched.set_time(next(it).text)
             a = next(it)[0]

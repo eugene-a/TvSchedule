@@ -1,7 +1,7 @@
 import datetime
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.etree
 from tv_schedule import schedule, dateutil
 
@@ -12,7 +12,6 @@ def need_channel_code():
 _URL = 'http://www.multimania.tv/ru/guide/?'
 _source_tz = pytz.timezone('Europe/Moscow')
 _daydelta = datetime.timedelta(1)
-_http = httplib2.Http()
 _parser = lxml.etree.HTMLParser(encoding='utf-8')
 
 
@@ -27,9 +26,8 @@ def get_schedule(channel, tz):
     d = today
     for i in range(weekday_now, 7):
         sched.set_date(d)
-        query = urllib.parse.urlencode({'d': d.strftime('%Y-%m-%d')})
-        content = _http.request(_URL + query)[1]
-        doc = lxml.etree.fromstring(content, _parser)
+        resp = requests.get(_URL, {'d': d.strftime('%Y-%m-%d')})
+        doc = lxml.etree.fromstring(resp.content, _parser)
         guide = doc[2][2][2][1][0][1][1][0][0]
         for row in guide[::2]:
             it = row.iterchildren()

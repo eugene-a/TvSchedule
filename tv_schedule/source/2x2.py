@@ -1,6 +1,6 @@
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.etree
 from tv_schedule import schedule, dateutil
 
@@ -11,28 +11,28 @@ def need_channel_code():
 _URL = 'http://2x2tv.ru'
 _SCHED_URL = '/bitrix/components/tk/schedule/ajax.php'
 _source_tz = pytz.timezone('Europe/Moscow')
-_http = httplib2.Http()
 _parser = lxml.etree.HTMLParser(encoding='utf-8')
 
 
 def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    doc = lxml.etree.fromstring(content, _parser)
+    resp = requests.get(url)
+    doc = lxml.etree.fromstring(resp.content, _parser)
     return doc[1]
 
 
 def _get_title_and_descr(url):
-    col = _fetch(url)[3][0][0][0][0][1][1][0][0]
-    table = col[0][0][0]
+    body = _fetch(url)
+    col = body[6][0][0][0][1][1][1][0][0]
+#    table = col[0][0][0]
     text = col.getnext()[0]
     title, descr = None, ''
-    if len(table) < 8:
-        title = text[1].text
-    else:
-        title = table[1][1].text
-        for i in [0, 3, 4, 5]:
-            descr += table[i][1].text + '\n'
+#    if len(table) < 10:
+    title = text[1].text
+#    else:
+#        title = table[1][1].text
+#        for i in [0, 3, 4, 5]:
+#            descr += table[i][1].text + '\n'
     descr += '\n'.join(x.text or '' for x in text[2:])
     return title, descr
 

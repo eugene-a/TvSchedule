@@ -1,9 +1,10 @@
 import datetime
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.html
 from tv_schedule import schedule, dateutil
+
 
 def need_channel_code():
     return False
@@ -13,15 +14,14 @@ _SCHED_URL = '/teleprograma/%Y-%m-%d'
 
 _source_tz = pytz.timezone('Europe/Kiev')
 _daydelta = datetime.timedelta(1)
-_http = httplib2.Http()
 
 
 def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    doc = lxml.html.fromstring(content)
+    resp = requests.get(url)
+    doc = lxml.html.fromstring(resp.content)
     if doc[1].tag == 'script':
-        return doc[3][7][3][1]
+        return doc[3][8][-2][1]
 
 
 def _get_descr(url):

@@ -1,6 +1,6 @@
 import datetime
 import pytz
-import httplib2
+import requests
 import lxml.html
 from tv_schedule import schedule
 
@@ -10,12 +10,11 @@ def need_channel_code():
 
 _URL = 'http://www.serialtv.ru/teleprogram/'
 _source_tz = pytz.timezone('Europe/Moscow')
-_http = httplib2.Http()
 
 
 def _fetch(url):
-    content = _http.request(url)[1]
-    doc = lxml.html.fromstring(content)
+    resp = requests.get(url)
+    doc = lxml.html.fromstring(resp.content)
     return doc[1][0][0][2][0][0][0][0]
 
 
@@ -52,7 +51,7 @@ def get_schedule(channel, tz):
 
     teleprog = _fetch(_URL)[0][1][0][1]
     for tab in teleprog[4: 11]:
-        dt = datetime.datetime.strptime(tab.get('rel'), 'tv_%Y%m%d')
+        dt = datetime.datetime.strptime(tab.get('data-day'), 'tv_%Y%m%d')
         sched.set_date(dt.date())
         for event in tab[0]:
             it = event.iterchildren()
@@ -63,7 +62,10 @@ def get_schedule(channel, tz):
                 descr = span[0].text
             else:
                 a = span[0]
-                title = a.text or span[2].text
+                if span[1].tag == 'span':
+                    title = span[1][1].text
+                else:
+                    title = a.text or span[2].text
                 descr = descriptions.get(a)
             sched.set_title(title)
             sched.set_descr(descr)

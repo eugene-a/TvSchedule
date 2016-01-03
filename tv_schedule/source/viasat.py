@@ -1,4 +1,4 @@
-import httplib2
+import requests
 import lxml.etree
 import pytz
 
@@ -15,7 +15,6 @@ _URL = ('http://www.viasat.lv/viasat0/tv-programma27/tv-programma28/' +
 
 _source_tz = pytz.timezone('Europe/Riga')
 
-_http = httplib2.Http()
 _parser = lxml.etree.HTMLParser()
 
 
@@ -27,7 +26,7 @@ def get_schedule(channel, tz):
     sched = schedule.Schedule(tz, _source_tz)
 
     url = _URL.format(ch_code)
-    doc = lxml.etree.fromstring(_http.request(url)[1], _parser)
+    doc = lxml.etree.fromstring(requests.get(url).content, _parser)
     prog = doc[1][0][5][0][3][0][1][0]
 
     new_date = False

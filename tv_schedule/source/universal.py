@@ -1,6 +1,6 @@
 import datetime
 import pytz
-import httplib2
+import requests
 import lxml.etree
 from tv_schedule import schedule, dateutil
 
@@ -12,7 +12,6 @@ _source_tz = pytz.timezone('Europe/Moscow')
 _URL = 'http://www.universalchannel.ru/schedule/%Y-%m-%d'
 
 _daydelta = datetime.timedelta(1)
-_http = httplib2.Http()
 _parser = lxml.etree.HTMLParser()
 
 
@@ -29,9 +28,8 @@ def get_schedule(channel, tz):
         sched.set_date(d)
 
         url = d.strftime(_URL)
-        content = _http.request(url)[1]
-        doc = lxml.etree.fromstring(content, _parser)
-        zoo = doc[2][8]
+        resp = requests.get(url)
+        doc = lxml.etree.fromstring(resp.content, _parser)
         inner = doc[2][7][0][0][2][0][0][0][0][0][1][0]
 
         for event in (x for x in inner[2:] if len(x) > 1):

@@ -1,7 +1,7 @@
 import datetime
 import urllib.parse
 import lxml.etree
-import httplib2
+import requests
 import pytz
 
 from tv_schedule import dateutil, schedule
@@ -20,14 +20,13 @@ _headers = {
 
 _URL = 'http://www.vsetv.com/'
 
-_http = httplib2.Http()
 _parser = lxml.etree.HTMLParser()
 
 
 def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url, headers=_headers)[1]
-    return lxml.etree.fromstring(content, _parser)
+    resp = requests.get(url, headers=_headers)
+    return lxml.etree.fromstring(resp.content, _parser)
 
 
 def main(doc):

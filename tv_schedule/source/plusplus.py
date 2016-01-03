@@ -1,7 +1,6 @@
 import datetime
-import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.etree
 from tv_schedule import schedule, dateutil
 
@@ -9,22 +8,20 @@ from tv_schedule import schedule, dateutil
 def need_channel_code():
     return False
 
-_URL = 'http://plus-plus.tv/dyvys/rozklad/?day=23&month=03&year=2015'
-_SCHED_URL = '/uk/tv/%Y/%m/%d'
+_URL = 'http://plus-plus.tv/dyvys/rozklad/'
 _source_tz = pytz.timezone('Europe/Kiev')
 _daydelta = datetime.timedelta(1)
-_http = httplib2.Http()
 _parser = lxml.etree.HTMLParser()
 
 
-def _fetch(url):
-    content = _http.request(url)[1]
-    doc = lxml.etree.fromstring(content, _parser)
-    return doc[1][1][1][0][1][0][2]
+def _fetch(url, params=None):
+    resp = requests.get(url, params)
+    doc = lxml.etree.fromstring(resp.content, _parser)
+    return doc[1][2][1][0][1][0][2]
 
 
 def _get_descr(url):
-    return '/n'.join(x.text or '' for x in _fetch(url)[2][2])
+    return '\n'.join(x.text or '' for x in _fetch(url)[2][2])
 
 
 class _Descriptions:
@@ -53,12 +50,11 @@ def get_schedule(channel, tz):
     d = today
     for i in range(weekday_now, 7):
         sched.set_date(d)
-        query = {'day': d.day, 'month': d.month, 'year': d.year}
-        url = _URL + urllib.parse.urlencode(query)
+        params = {'day': d.day, 'month': d.month, 'year': d.year}
         i = 0
-        for list in _fetch(url)[4]:
+        for lst in _fetch(_URL, params)[4]:
             i = 1 - i
-            for a in (x[i][0] for x in list if len(x[i]) > 0):
+            for a in (x[i][0] for x in lst if len(x[i]) > 0):
                 it = a.iterchildren()
                 sched.set_time(next(it).text)
                 sched.set_title(next(it).text)

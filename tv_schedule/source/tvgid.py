@@ -2,7 +2,7 @@ import datetime
 import urllib.parse
 import itertools
 import pytz
-import httplib2
+import requests
 import lxml.html
 from tv_schedule import schedule, dateutil
 
@@ -16,13 +16,12 @@ _URL = 'http://tvgid.ua'
 _SCHED_URL = '/tv-program/ch/%d%m%Y/id{}/'
 _source_tz = pytz.timezone('Europe/Kiev')
 _daydelta = datetime.timedelta(1)
-_http = httplib2.Http()
 
 
 def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    doc = lxml.html.fromstring(content)
+    resp = requests.get(url)
+    doc = lxml.html.fromstring(resp.content)
     return doc[1][1][0][0][0][0][0][1][1][1]
 
 

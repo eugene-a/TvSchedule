@@ -1,6 +1,6 @@
 import datetime
 import pytz
-import httplib2
+import requests
 import lxml.etree
 from tv_schedule import schedule, dateutil
 
@@ -11,7 +11,6 @@ def need_channel_code():
 _URL = 'http://tv.khl.ru/'
 
 _source_tz = pytz.timezone('Europe/Moscow')
-_http = httplib2.Http()
 _parser = lxml.etree.HTMLParser()
 
 
@@ -20,8 +19,8 @@ def get_schedule(channel, tz):
         return []
 
     sched = schedule.Schedule(tz, _source_tz)
-    content = _http.request(_URL)[1]
-    doc = lxml.etree.fromstring(content, _parser)
+    resp = requests.get(_URL)
+    doc = lxml.etree.fromstring(resp.content, _parser)
     channel = doc[1][6][2][0][2][1]
     for item, progs in zip(channel[2][0], channel[4]):
         fmt = '%a %d.%m.%y'

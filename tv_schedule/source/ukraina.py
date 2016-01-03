@@ -1,6 +1,6 @@
 import datetime
 import pytz
-import httplib2
+import requests
 import lxml.html
 from tv_schedule import schedule, dateutil
 
@@ -11,13 +11,12 @@ def need_channel_code():
 _URL = 'http://kanalukraina.tv/ru/schedule/single/schedule/%d-%m-%Y/'
 _source_tz = pytz.timezone('Europe/Kiev')
 _daydelta = datetime.timedelta(1)
-_http = httplib2.Http()
 _parser = lxml.html.HTMLParser(encoding='utf-8')
 
 
 def _fetch(url):
-    content = _http.request(url)[1]
-    doc = lxml.html.fromstring(content, parser=_parser)
+    resp = requests.get(url)
+    doc = lxml.html.fromstring(resp.content, parser=_parser)
     return doc[1]
 
 
@@ -68,7 +67,12 @@ def get_schedule(channel, tz):
             else:
                 a = name[0]
                 sched.set_title(a.text)
-                descr = descriptions.get(a) or info.getnext()[0][1][0].text
+                zoo = info.getnext()[0][1]
+                descr = descriptions.get(a)
+                if not descr:
+                    zoo = info.getnext()[0][1]
+                    if len(zoo) > 0:
+                        descr = zoo[0].text
                 sched.set_descr(descr)
         d += _daydelta
     return sched.pop()

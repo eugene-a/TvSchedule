@@ -2,7 +2,7 @@ import datetime
 import urllib.parse
 import itertools
 import pytz
-import httplib2
+import requests
 import lxml.html
 from tv_schedule import schedule, dateutil
 
@@ -13,7 +13,6 @@ def need_channel_code():
 _URL = 'http://www.tvc.ru/'
 _SCHED_URL = '/tvp/index/date/%d-%m-%Y'
 
-_http = httplib2.Http()
 _source_tz = pytz.timezone('Europe/Moscow')
 _daydelta = datetime.timedelta(1)
 
@@ -22,10 +21,10 @@ _parser = lxml.html.HTMLParser(encoding='utf-8')
 
 def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    doc = lxml.html.fromstring(content, parser=_parser)
+    resp = requests.get(url)
+    doc = lxml.html.fromstring(resp.content, parser=_parser)
     page_wrap = doc[1][8]
-    return next(itertools.islice(page_wrap.iterchildren('div'), 1, 2))
+    return next(itertools.islice(page_wrap.iterchildren('div'), 2, None))
 
 
 def _get_descr(url):

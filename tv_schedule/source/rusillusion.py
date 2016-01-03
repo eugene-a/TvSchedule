@@ -1,7 +1,7 @@
 import datetime
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.etree
 from tv_schedule import schedule, dateutil
 
@@ -12,9 +12,7 @@ def need_channel_code():
 _source_tz = pytz.timezone('Europe/Moscow')
 _URL = 'http://russkiyillusion.ru'
 _SCHED_URL = '/schedule_ajax_helper.php'
-_headers = {'Content-Type': 'application/x-www-form-urlencoded'}
 
-_http = httplib2.Http()
 _daydelta = datetime.timedelta(1)
 
 _parser = lxml.etree.HTMLParser(encoding='utf-8')
@@ -22,8 +20,8 @@ _parser = lxml.etree.HTMLParser(encoding='utf-8')
 
 def _get_descr(url):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    doc = lxml.etree.fromstring(content, _parser)
+    resp = requests.get(url)
+    doc = lxml.etree.fromstring(resp.content, _parser)
     text = doc[1][1][0][3][0][0][0][2]
     txt = text[0].text
     descr = txt + '\n' if txt else ''
@@ -64,9 +62,9 @@ def get_schedule(channel, tz):
     d = today
     for i in range(weekday_now, 7):
         sched.set_date(d)
-        body = urllib.parse.urlencode({'d': d.strftime("%Y%m%d")})
-        content = _http.request(url, 'POST', body, _headers)[1]
-        doc = lxml.etree.fromstring(content, _parser)
+        data = {'d': d.strftime("%Y%m%d")}
+        resp = requests.post(url, data)
+        doc = lxml.etree.fromstring(resp.content, _parser)
         for row in doc[0][1]:
             sched.set_time(row[0].text)
             sched.set_title(row[1][0].text)

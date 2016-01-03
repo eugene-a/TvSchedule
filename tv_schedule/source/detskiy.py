@@ -1,7 +1,7 @@
 import datetime
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.html
 from tv_schedule import schedule, dateutil
 
@@ -12,17 +12,15 @@ def need_channel_code():
 _URL = 'http://telekanaldetskiy.ru'
 _SCHED_URL = '/schedule_ajax_helper.php'
 _sched_url = urllib.parse.urljoin(_URL, _SCHED_URL)
-_headers = {'Content-Type': 'application/x-www-form-urlencoded'}
 _source_tz = pytz.timezone('Europe/Moscow')
 _daydelta = datetime.timedelta(1)
-_http = httplib2.Http()
 _parser = lxml.html.HTMLParser(encoding='utf-8')
 
 
 def _get_descr(url):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    doc = lxml.html.fromstring(content, parser=_parser)
+    resp = requests.get(url)
+    doc = lxml.html.fromstring(resp.content, parser=_parser)
     descr = doc[1][1][0][2][0][1][3][2][0]
     for br in descr.iterchildren('br'):
         br.tail = '\n' + (br.tail or '')
@@ -57,9 +55,9 @@ def get_schedule(channel, tz):
     d = today
     for i in range(weekday_now, 7):
         sched.set_date(d)
-        body = urllib.parse.urlencode({'d': d.strftime('%Y%m%d')})
-        content = _http.request(_sched_url, 'POST', body, _headers)[1]
-        doc = lxml.html.fragment_fromstring(content, True, parser=_parser)
+        data = {'d': d.strftime('%Y%m%d')}
+        resp = requests.post(_sched_url, data)
+        doc = lxml.html.fragment_fromstring(resp.content, True, parser=_parser)
         for event in doc[1]:
             sched.set_time(event[0].text)
             sched.set_title(event[2][0].text)

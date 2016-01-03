@@ -1,8 +1,7 @@
 import datetime
-import json
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.etree
 from tv_schedule import schedule, dateutil
 
@@ -20,7 +19,6 @@ _event_url = urllib.parse.urljoin(_URL, _EVENT_URL) + '?'
 _source_tz = pytz.timezone('Europe/Moscow')
 _daydelta = datetime.timedelta(1)
 _parser = lxml.etree.HTMLParser()
-_http = httplib2.Http()
 
 _channels = {
     'Охота и рыбалка': '6',
@@ -33,10 +31,8 @@ _channels = {
 }
 
 
-def _fetch(url, query):
-    url = url + urllib.parse.urlencode(query)
-    content = _http.request(url)[1]
-    return json.loads(content.decode())
+def _fetch(url, params):
+    return requests.get(url, params).json()
 
 
 def _get_descr(id):
@@ -62,7 +58,7 @@ def get_schedule(channel, tz):
 
     descriptions = _Descriptions()
 
-    query = {'channel': chan, 'type': 'week'}
+    params = {'channel': chan, 'type': 'week'}
     today = dateutil.tv_date_now(_source_tz)
 
     weekday_now = today.weekday()
@@ -71,8 +67,8 @@ def get_schedule(channel, tz):
     d = today
     for i in range(weekday_now, 7):
         sched.set_date(d)
-        query['year'], query['week'], query['dayOfWeek'] = d.isocalendar()
-        list = _fetch(_sched_url, query)['list']
+        params['year'], params['week'], params['dayOfWeek'] = d.isocalendar()
+        list = _fetch(_sched_url, params)['list']
         doc = lxml.etree.fromstring(list, _parser)
         for li in doc[0][0][0]:
             sched.set_time(li[0].text)

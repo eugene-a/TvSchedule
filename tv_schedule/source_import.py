@@ -3,7 +3,7 @@ import yaml
 
 from tv_schedule import config
 
-_CHANNEL_ASSIGNMENT = 'channel_assignment'
+_SOURCE_ASSIGNMENT = 'source_assignment'
 _OPTION_DEFAULT = 'default'
 _OPTION_SPECIAL = 'special'
 _YAML_SRC_TAG = '!src'
@@ -29,5 +29,5 @@ def import_sources():
             self.default = dct.get(_OPTION_DEFAULT, [])
             self.special = dct.get(_OPTION_SPECIAL, [])
 
-    with config.open_source(_CHANNEL_ASSIGNMENT) as f:
+    with config.open_source(_SOURCE_ASSIGNMENT) as f:
         return Sources(yaml.load(f))

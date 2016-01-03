@@ -1,6 +1,6 @@
 import datetime
 import pytz
-import httplib2
+import requests
 import lxml.etree
 from tv_schedule import schedule, dateutil
 
@@ -10,7 +10,6 @@ def need_channel_code():
 
 _URL = 'http://www.moya-planeta.ru/program/date/%d-%m-%Y/'
 
-_http = httplib2.Http()
 _source_tz = pytz.timezone('Europe/Moscow')
 _daydelta = datetime.timedelta(1)
 
@@ -18,8 +17,8 @@ _parser = lxml.etree.HTMLParser()
 
 
 def _fetch(url):
-    content = _http.request(url)[1]
-    doc = lxml.etree.fromstring(content, _parser)
+    resp = requests.get(url)
+    doc = lxml.etree.fromstring(resp.content, _parser)
     table = doc[1][0][0][1][0]
     return table[0][0][2] if table.tag == 'table' else []
 

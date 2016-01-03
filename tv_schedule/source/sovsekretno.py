@@ -1,7 +1,7 @@
 import itertools
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.etree
 from tv_schedule import schedule, dateutil
 
@@ -12,20 +12,24 @@ def need_channel_code():
 _source_tz = pytz.timezone('Europe/Moscow')
 _URL = 'http://sovsekretno.tv/телепрограмма/'
 
-_http = httplib2.Http()
 _parser = lxml.etree.HTMLParser(encoding='utf-8')
 
 
 def _fetch(url):
-    content = _http.request(url)[1]
-    doc = lxml.etree.fromstring(content, _parser)
+    resp = requests.get(url)
+    doc = lxml.etree.fromstring(resp.content, _parser)
     return doc[2][0][0][0][1][0]
 
 
 def _get_descr(url):
     if urllib.parse.urlparse(url).path != '/':
-        text = _fetch(url)[0][0][2][0][1][-2]
-        return '\n'.join(x.text or '' for x in text)
+        try:
+            main = _fetch(url)
+        except IndexError:
+            return ''
+        else:
+            text = main[0][0][2][0][1][-2]
+            return '\n'.join(x.text or '' for x in text)
 
 
 class _Descriptions:
@@ -60,9 +64,15 @@ def get_schedule(channel, tz):
             event = tv[0]
             sched.set_time(event[0].text)
             info = event[1]
-            sched.set_title(info[1].text.lstrip())
             p = info[0]
-            descr = (p.text.rstrip() + '\n' + p[0].text.strip() + '\n' +
-                     descriptions.get(tv[1]))
+            title = info[1].text
+            descr = p.text.rstrip()
+            if title:
+                sched.set_title(title.lstrip())
+            else:
+                sched.set_title(descr)
+                descr = ''
+            descr += ('\n' + p[0].text.strip() + '\n' +
+                      descriptions.get(tv[1]))
             sched.set_descr(descr)
     return sched.pop()

@@ -1,8 +1,8 @@
 import datetime
 import pytz
-import httplib2
+import requests
 import lxml.html
-from tv_schedule import schedule, dateutil
+from tv_schedule import schedule
 
 
 def need_channel_code():
@@ -10,18 +10,17 @@ def need_channel_code():
 
 _URL = 'http://www.365days.ru/teleprogram'
 _source_tz = pytz.timezone('Europe/Moscow')
-_http = httplib2.Http()
 
 
 def _fetch(url):
-    content = _http.request(url)[1]
-    doc = lxml.html.fromstring(content)
+    resp = requests.get(url)
+    doc = lxml.html.fromstring(resp.content)
     return doc[1][0][0][0][0][3][0][0][0]
 
 
 def _get_descr(url):
     descr = ''
-    for p in _fetch(url).iterchildren('p'):
+    for p in _fetch(url)[1].iterchildren('p'):
         for br in p.iterchildren('br'):
             br.tail = '\n' + (br.tail or '')
         descr += p.text_content() + '\n'
@@ -49,16 +48,21 @@ def get_schedule(channel, tz):
     descriptions = _Descriptions()
 
     for tab in _fetch(_URL)[4][4: 11]:
-        dt = datetime.datetime.strptime(tab.get('rel'), 'tv_%Y%m%d')
+        dt = datetime.datetime.strptime(tab.get('data-day'), 'tv_%Y%m%d')
         sched.set_date(dt.date())
-        for event in tab[0]:
-            it = event.iterchildren()
-            sched.set_time(next(it).text)
-            span = next(it)
-            if len(span) < 2:
-                sched.set_title(span.text.lstrip())
-            else:
-                a = next(span.iterchildren('a', reversed=True))
-                sched.set_title(a.text.rstrip(','))
-                sched.set_descr(descriptions.get(a))
+        for period in tab[0]:
+            for event in period[1:]:
+                it = event.iterdescendants()
+                next(it)
+                sched.set_time(next(it).text)
+                next(it)
+                next(it)
+                a = next(it)
+                if a.tag == 'a':
+                    sched.set_title(a.text)
+                    sched.set_descr(descriptions.get(a))
+                else:
+                    sched.set_title(next(it).text)
+                    sched.set_descr(next(it).text)
+
     return sched.pop()

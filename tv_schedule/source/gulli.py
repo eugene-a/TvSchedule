@@ -1,7 +1,7 @@
 import datetime
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.etree
 from tv_schedule import schedule, dateutil
 
@@ -10,17 +10,16 @@ def need_channel_code():
     return False
 
 _URL = 'http://www.gulli.ru'
-_SCHED_URL = '/schedule/?'
+_SCHED_URL = '/schedule/'
 _source_tz = pytz.timezone('Europe/Moscow')
 _daydelta = datetime.timedelta(1)
-_http = httplib2.Http()
 _parser = lxml.etree.HTMLParser()
 
 
-def _fetch(url):
+def _fetch(url, params=None):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    doc = lxml.etree.fromstring(content, _parser)
+    resp = requests.get(url, params)
+    doc = lxml.etree.fromstring(resp.content, _parser)
     inner = doc[1][0][6][0][0][2]
     if len(inner) > 0:
         return inner[0][2]
@@ -56,8 +55,8 @@ def get_schedule(channel, tz):
     d = today
     for i in range(weekday_now, 7):
         sched.set_date(d)
-        query = urllib.parse.urlencode({'date': d.strftime('%Y-$m-%d')})
-        for item in _fetch(_SCHED_URL + query):
+
+        for item in _fetch(_SCHED_URL, {'date': d.strftime('%Y-$m-%d')}):
             it = item.iterchildren()
             next(it)
             sched.set_time(next(it).text)

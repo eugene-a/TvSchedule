@@ -1,7 +1,7 @@
 import datetime
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.etree
 from tv_schedule import dateutil, schedule
 
@@ -18,16 +18,14 @@ _parser = lxml.etree.HTMLParser()
 
 
 _URL = 'http://www.ntvplus.ru'
-_CHAN_URL = '/channels/channel.xl?'
-
-_http = httplib2.Http()
+_CHAN_URL = '/channels/channel.xl'
 
 
-def _fetch(url):
+def _fetch(url, params=None):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    doc = lxml.etree.fromstring(content, _parser)
-    return doc[1][-1][0][4][0][0]
+    resp = requests.get(url, params)
+    doc = lxml.etree.fromstring(resp.content, _parser)
+    return doc[1][-2][0][4][0][0]
 
 
 def _parse_infoitem(li):
@@ -105,15 +103,19 @@ def get_schedule(channel, tz):
     today = dateutil.tv_date_now(_source_tz)
     weekday_now = today.weekday()
     sched = schedule.Schedule(tz, _source_tz)
-    arg = {'id': ch_code}
+    params = {'id': ch_code}
 
     d = today
     for i in range(weekday_now, 7):
         sched.set_date(d)
-        arg['day'] = d.strftime('%d.%m.%Y')
-        url = _CHAN_URL + urllib.parse.urlencode(arg)
-        tvguide = next(x for x in _fetch(url) if x.get('id') == 'tvguide')
-        for col in range(2):
-            _get_column(tvguide[0], sched, event_info, col)
+        params['day'] = d.strftime('%d.%m.%Y')
+        item = _fetch(_CHAN_URL, params)
+        try:
+            tvguide = next(x for x in item if x.get('id') == 'tvguide')
+        except StopIteration:
+            pass
+        else:
+            for col in range(2):
+                _get_column(tvguide[0], sched, event_info, col)
         d += _daydelta
     return sched.pop()

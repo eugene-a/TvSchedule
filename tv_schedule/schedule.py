@@ -72,7 +72,7 @@ class Schedule:
 
     def set_descr(self, descr):
         if descr:
-            descr.strip()
+            descr = descr.strip()
             if descr:
                 event = self._events[-1]
                 event.descr = descr

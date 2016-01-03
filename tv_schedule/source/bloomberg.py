@@ -37,10 +37,15 @@ def get_schedule(channel, tz):
         date = _to_month_number(next(it).text)
         d = datetime.datetime.strptime(date, '%m %d, %Y')
         sched.set_date(d)
-        for row in next(it)[0][1:]:
-            it = row.iterdescendants()
-            sched.set_time(next(it).text)
-            next(it)
-            sched.set_title(next(it).text.strip())
-            sched.set_descr(next(it).text.strip())
+        try:
+            row = next(it)
+        except StopIteration:
+            pass
+        else:
+            for row in row[0][1:]:
+                it = row.iterdescendants()
+                sched.set_time(next(it).text)
+                next(it)
+                sched.set_title(next(it).text.strip())
+                sched.set_descr(next(it).text.strip())
     return sched.pop()

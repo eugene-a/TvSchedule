@@ -2,7 +2,7 @@ import datetime
 import itertools
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.html
 from tv_schedule import schedule, dateutil
 
@@ -16,21 +16,24 @@ _SCHED_URL = '/tv-programma'
 _source_tz = pytz.timezone('Europe/Moscow')
 _daydelta = datetime.timedelta(1)
 
-_http = httplib2.Http()
-
 
 def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    doc = lxml.html.fromstring(content)
-    return doc[2][9][0][3][0][1][0][1][1][0]
+    resp = requests.get(url)
+    doc = lxml.html.fromstring(resp.content)
+    content = doc[2].get_element_by_id('content')
+    return content[1][0][0]
 
 
 def _get_descr(url):
-    section = next(
-        itertools.islice(_fetch(url).iterchildren('section'), 1, None)
-    )
-    return '\n'.join(x.text_content() for x in section.iter('p'))
+    try:
+        section = next(
+           itertools.islice(_fetch(url).iterchildren('section'), 1, None)
+        )
+    except StopIteration:
+        pass
+    else:
+        return '\n'.join(x.text_content() for x in section.iter('p'))
 
 
 class _Descriptions:
@@ -39,7 +42,7 @@ class _Descriptions:
 
     def get(self, a):
         href = a.get('href')
-        if href.startswith('node/'):
+        if href.startswith('node/') and len(href) > 5:
             key = int(href[5:])
             descr = self._cash.get(key)
             if descr is None:

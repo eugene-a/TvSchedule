@@ -2,7 +2,7 @@ import datetime
 import urllib.parse
 import itertools
 import pytz
-import httplib2
+import requests
 import lxml.html
 from tv_schedule import schedule, dateutil
 
@@ -22,13 +22,11 @@ _URL = None
 _source_tz = pytz.timezone('Europe/Moscow')
 _daydelta = datetime.timedelta(1)
 
-_http = httplib2.Http()
-
 
 def _fetch(url):
-    content = _http.request(url)[1]
-    doc = lxml.html.fromstring(content)
-    return doc[1][2][3]
+    resp = requests.get(url)
+    doc = lxml.html.fromstring(resp.content)
+    return doc[1][3]
 
 
 def _get_text(elem):
@@ -65,7 +63,7 @@ def get_schedule(channel, tz):
 
     today = dateutil.tv_date_now(_source_tz)
     weekday_now = today.weekday()
-    sched = schedule.Schedule(tz, pytz.timezone('UTC'))
+    sched = schedule.Schedule(tz, pytz.UTC)
 
     descriptions = _Descriptions()
 

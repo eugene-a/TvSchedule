@@ -1,6 +1,6 @@
 import datetime
 import pytz
-import httplib2
+import requests
 import lxml.etree
 from tv_schedule import schedule, dateutil
 
@@ -13,22 +13,23 @@ _URL = 'http://pixelua.tv/category/tv-schedule/{}/'
 
 _source_tz = pytz.timezone('Europe/Kiev')
 _daydelta = datetime.timedelta(1)
-_http = httplib2.Http()
 _parser = lxml.etree.HTMLParser()
 
 
-_weekadys = ['sunday', 'monday', 'tuesday', 'wednesday',
-             'thursday', 'friday', 'saturday']
+_weekday = ['sunday', 'monday', 'tuesday', 'wednesday',
+            'thursday', 'friday', 'saturday']
 
 _implicit_fields = ['Оригінальна назва', 'Виробництво', 'Жанр',
                     'Про мультик', 'Про проект']
 
 
 def _fetch(url):
-    content = _http.request(url)[1]
-    doc = lxml.etree.fromstring(content, _parser)
-    wrapper = next(doc[1].iterchildren('div', reversed=True))
-    return wrapper[1]
+    for i in range(5):
+        resp = requests.get(url)
+        doc = lxml.etree.fromstring(resp.content, _parser)
+        wrapper = next(doc[1].iterchildren('div', reversed=True), None)
+        if wrapper is not None:
+            return wrapper[1]
 
 
 def _get_title_and_descr(url):
@@ -81,7 +82,7 @@ def get_schedule(channel, tz):
     d = today
     for i in range(weekday_now, 7):
         sched.set_date(d)
-        url = _URL.format(_weekadys[i])
+        url = _URL.format(_weekday[i])
         for li in _fetch(url)[3][0][1:]:
             sched.set_time(li[0].text)
             t = li[1]

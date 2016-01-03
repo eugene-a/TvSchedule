@@ -2,7 +2,7 @@ import datetime
 import urllib.parse
 import itertools
 import pytz
-import httplib2
+import requests
 import lxml.etree
 from tv_schedule import schedule, dateutil
 
@@ -14,21 +14,21 @@ _URL = 'http://1tv.com.ua'
 _SCHED_URL = 'schedule/load/week2day{}'
 _daydelta = datetime.timedelta(1)
 _source_tz = pytz.timezone('Europe/Kiev')
-_http = httplib2.Http()
 _parser = lxml.etree.HTMLParser(encoding='utf-8')
 
 
 def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    return lxml.etree.fromstring(content, _parser)
+    resp = requests.get(url)
+    return lxml.etree.fromstring(resp.content, _parser)
 
 
 def _get_descr(url):
-    doc = _fetch(url)
-    cut = doc[1][14][4][0][11][1][0]
-    return '\n'.join(x.text or ''
-                     for x in cut.iterdescendants() if len(x) == 0)
+    container = _fetch(url)[1][14]
+    if len(container) > 5:
+        cut = container[4][0][11][1][0]
+        return '\n'.join(x.text or ''
+                         for x in cut.iterdescendants() if len(x) == 0)
 
 
 class _Descriptions:

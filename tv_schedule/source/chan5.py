@@ -1,7 +1,6 @@
 import datetime
-import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.html
 from tv_schedule import schedule, dateutil
 
@@ -9,17 +8,15 @@ from tv_schedule import schedule, dateutil
 def need_channel_code():
     return False
 
-_URL = 'http://www.5-tv.ru/schedule/?'
+_URL = 'http://www.5-tv.ru/schedule/'
 
 _source_tz = pytz.timezone('Europe/Moscow')
 _daydelta = datetime.timedelta(1)
 
-_http = httplib2.Http()
 
-
-def _fetch(url):
-    content = _http.request(url)[1]
-    doc = lxml.html.fromstring(content)
+def _fetch(url, params=None):
+    resp = requests.get(url, params)
+    doc = lxml.html.fromstring(resp.content)
     wrapper = doc[1][0]
     if len(wrapper) > 2:
         return wrapper[2][0][0]
@@ -31,9 +28,9 @@ def _get_text(elem):
 
 def _get_descr(url):
     doc = _fetch(url)
-    if doc is not None:
+    if doc is not None and doc.get('class') == 'main':
         det = doc[1]
-        if det.tag == 'div':
+        if det.tag == 'div' and len(det[0]) > 1:
             return _get_text(det[0][1]) + _get_text(det[1])
     return ''
 
@@ -64,9 +61,8 @@ def get_schedule(channel, tz):
     d = today
     for i in range(weekday_now, 7):
         sched.set_date(d)
-        query = {'date': d.strftime('%Y-%m-%d')}
-        url = _URL + urllib.parse.urlencode(query)
-        for li in _fetch(url)[3][0]:
+        param = {'date': d.strftime('%Y-%m-%d')}
+        for li in _fetch(_URL, param)[3][0]:
             sched.set_time(li[0].text)
             a = li[1]
             if a.tag == 'a':

@@ -1,7 +1,7 @@
 import datetime
 import urllib.parse
 import pytz
-import httplib2
+import requests
 import lxml.html
 from tv_schedule import schedule, dateutil
 
@@ -13,18 +13,22 @@ _URL = 'http://ntn.ua'
 _SCHED_URL = '/uk/tv/%Y/%m/%d'
 _source_tz = pytz.timezone('Europe/Kiev')
 _daydelta = datetime.timedelta(1)
-_http = httplib2.Http()
 
 
 def _fetch(url):
     url = urllib.parse.urljoin(_URL, url)
-    content = _http.request(url)[1]
-    doc = lxml.html.fromstring(content)
-    return doc[1][0][7][4][-1][0][0][0][0][0][0]
+    resp = requests.get(url)
+    doc = lxml.html.fromstring(resp.content)
+    body = next(x for x in doc[1] if x.get('id') == 'body')
+    return body[7][5][-1][0][0][0][0][0][0]
 
 
 def _get_descr(url):
-    return '/n'.join(x.text or '' for x in _fetch(url)[2][2][-1])
+    b_block = _fetch(url)
+    if len(b_block) < 3:
+        return ''
+    else:
+        return '\n'.join(x.text or '' for x in b_block[2][2][-1])
 
 
 class _Descriptions:
